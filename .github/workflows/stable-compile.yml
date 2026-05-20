@@ -1,0 +1,125 @@
+name: stable-compile
+
+on:
+  workflow_call:
+    inputs:
+      MS_COMMIT:
+        required: true
+        type: string
+      MS_TAG:
+        required: true
+        type: string
+      RELEASE_VERSION:
+        required: true
+        type: string
+      RELEASE_TITLE:
+        required: true
+        type: string
+      VOID_VERSION:
+        required: true
+        type: string
+      SHOULD_BUILD:
+        required: true
+        type: string
+      SHOULD_DEPLOY:
+        required: true
+        type: string
+    outputs:
+      BUILD_SOURCEVERSION:
+        value: ${{ jobs.compile.outputs.BUILD_SOURCEVERSION }}
+
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+  APP_NAME: Void
+  ASSETS_REPOSITORY: jcommaret/void
+  BINARY_NAME: void
+  DISABLE_UPDATE: 'yes'
+  GH_REPO_PATH: jcommaret/void
+  ORG_NAME: jcommaret
+  VERSIONS_REPOSITORY: jcommaret/void
+  VSCODE_QUALITY: stable
+
+jobs:
+  compile:
+    runs-on: ubuntu-22.04
+    outputs:
+      BUILD_SOURCEVERSION: ${{ env.BUILD_SOURCEVERSION }}
+    env:
+      MS_COMMIT: ${{ inputs.MS_COMMIT }}
+      MS_TAG: ${{ inputs.MS_TAG }}
+      RELEASE_VERSION: ${{ inputs.RELEASE_VERSION }}
+      RELEASE_TITLE: ${{ inputs.RELEASE_TITLE }}
+      VOID_VERSION: ${{ inputs.VOID_VERSION }}
+      SHOULD_BUILD: ${{ inputs.SHOULD_BUILD }}
+      VSCODE_ARCH: x64
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.GITHUB_BRANCH }}
+        if: env.SHOULD_BUILD == 'yes'
+
+      - name: Switch to relevant branch
+        env:
+          PULL_REQUEST_ID: ${{ github.event.inputs.checkout_pr }}
+        run: ./get_pr.sh
+        if: env.SHOULD_BUILD == 'yes'
+
+      - name: Setup GCC
+        uses: egor-tensin/setup-gcc@v2
+        with:
+          version: 10
+          platform: x64
+        if: env.SHOULD_BUILD == 'yes'
+
+      - name: Add ubuntu-toolchain-r PPA keys
+        run: |
+          sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 \
+            --recv-keys 2C277A0A352154E5 1E9377A2BA9EF27F
+        if: env.SHOULD_BUILD == 'yes'
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22.22.2'
+        if: env.SHOULD_BUILD == 'yes'
+
+      - name: Setup Python 3
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+        if: env.SHOULD_BUILD == 'yes'
+
+      - name: Install libkrb5-dev
+        run: sudo apt-get update -y && sudo apt-get install -y libkrb5-dev
+        if: env.SHOULD_BUILD == 'yes'
+
+      - name: Clone VSCode repo
+        env:
+          VOID_COMMIT: ${{ github.event.inputs.void_commit }}
+          VOID_RELEASE: ${{ github.event.inputs.void_release }}
+        run: ./get_repo.sh
+        if: env.SHOULD_BUILD == 'yes'
+
+      - name: Build
+        env:
+          SHOULD_BUILD_REH: 'no'
+          SHOULD_BUILD_REH_WEB: 'no'
+        run: ./build.sh
+        if: env.SHOULD_BUILD == 'yes'
+
+      - name: Compress vscode artifact
+        run: |
+          find vscode -type f -not -path "*/node_modules/*" -not -path "vscode/.build/node/*" -not -path "vscode/.git/*" > vscode.txt
+          echo "vscode/.build/extensions/node_modules" >> vscode.txt
+          echo "vscode/.git" >> vscode.txt
+          tar -czf vscode.tar.gz -T vscode.txt
+        if: env.SHOULD_BUILD == 'yes'
+
+      - name: Upload vscode artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vscode
+          path: ./vscode.tar.gz
+          retention-days: ${{ inputs.SHOULD_DEPLOY == 'yes' && 30 || 1 }}
+        if: env.SHOULD_BUILD == 'yes'

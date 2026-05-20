@@ -1,0 +1,67 @@
+name: stable-check
+
+on:
+  workflow_call:
+    outputs:
+      MS_COMMIT:
+        value: ${{ jobs.check.outputs.MS_COMMIT }}
+      MS_TAG:
+        value: ${{ jobs.check.outputs.MS_TAG }}
+      RELEASE_VERSION:
+        value: ${{ jobs.check.outputs.RELEASE_VERSION }}
+      RELEASE_TITLE:
+        value: ${{ jobs.check.outputs.RELEASE_TITLE }}
+      VOID_VERSION:
+        value: ${{ jobs.check.outputs.VOID_VERSION }}
+      SHOULD_BUILD:
+        value: ${{ jobs.check.outputs.SHOULD_BUILD }}
+      SHOULD_DEPLOY:
+        value: ${{ jobs.check.outputs.SHOULD_DEPLOY }}
+
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+  APP_NAME: Void
+  ASSETS_REPOSITORY: jcommaret/void
+  BINARY_NAME: void
+  DISABLE_UPDATE: 'yes'
+  GH_REPO_PATH: jcommaret/void
+  ORG_NAME: jcommaret
+  VERSIONS_REPOSITORY: jcommaret/void
+  VSCODE_QUALITY: stable
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      MS_COMMIT: ${{ env.MS_COMMIT }}
+      MS_TAG: ${{ env.MS_TAG }}
+      RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
+      RELEASE_TITLE: ${{ env.RELEASE_TITLE }}
+      VOID_VERSION: ${{ env.VOID_VERSION }}
+      SHOULD_BUILD: ${{ env.SHOULD_BUILD }}
+      SHOULD_DEPLOY: ${{ env.SHOULD_DEPLOY }}
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.GITHUB_BRANCH }}
+
+      - name: Switch to relevant branch
+        env:
+          PULL_REQUEST_ID: ${{ github.event.inputs.checkout_pr }}
+        run: ./get_pr.sh
+
+      - name: Clone VSCode repo
+        env:
+          VOID_COMMIT: ${{ github.event.inputs.void_commit }}
+          VOID_RELEASE: ${{ github.event.inputs.void_release }}
+        run: ./get_repo.sh
+
+      - name: Check PR or cron
+        run: ./check_cron_or_pr.sh
+
+      - name: Check existing VSCodium tags/releases
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CHECK_ALL: 'yes'
+        run: ./check_tags.sh

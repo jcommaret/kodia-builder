@@ -14,16 +14,10 @@ elif [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
 	export SHOULD_BUILD="yes"
 	export SHOULD_DEPLOY="no"
 elif [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
-  if [[ "${GENERATE_ASSETS}" == "true" ]]; then
-    echo "It will generate the assets"
+  echo "It's a Dispatch"
 
-    export SHOULD_BUILD="yes"
-    export SHOULD_DEPLOY="no"
-  else
-  	echo "It's a Dispatch"
-
-    export SHOULD_DEPLOY="yes"
-  fi
+  export SHOULD_BUILD="yes"
+  export SHOULD_DEPLOY="yes"
 else
 	echo "It's a Cron"
 
