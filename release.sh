@@ -13,16 +13,28 @@ REPOSITORY_NAME="${ASSETS_REPOSITORY/*\//}"
 
 npm install -g github-release-cli
 
-VOID_VERSION="${VOID_VERSION:-${RELEASE_VERSION}}"
-if [[ -z "${RELEASE_TITLE}" ]]; then
-  if [[ -n "${MS_TAG}" && -n "${VOID_VERSION}" ]]; then
-    RELEASE_TITLE="${MS_TAG} - ${VOID_VERSION}"
-  else
-    RELEASE_TITLE="${VOID_VERSION:-${RELEASE_VERSION}}"
+if [[ "${UPLOAD_TO_LATEST_TAG}" == "yes" ]]; then
+  echo "Resolving latest release on ${ASSETS_REPOSITORY}..."
+  RELEASE_VERSION=$( gh release list --repo "${ASSETS_REPOSITORY}" --limit 1 --json tagName --jq '.[0].tagName // empty' )
+
+  if [[ -z "${RELEASE_VERSION}" ]]; then
+    echo "No GitHub release found on ${ASSETS_REPOSITORY}; skipping upload."
+    exit 0
+  fi
+
+  echo "Uploading assets to latest release tag: ${RELEASE_VERSION}"
+else
+  VOID_VERSION="${VOID_VERSION:-${RELEASE_VERSION}}"
+  if [[ -z "${RELEASE_TITLE}" ]]; then
+    if [[ -n "${MS_TAG}" && -n "${VOID_VERSION}" ]]; then
+      RELEASE_TITLE="${MS_TAG} - ${VOID_VERSION}"
+    else
+      RELEASE_TITLE="${VOID_VERSION:-${RELEASE_VERSION}}"
+    fi
   fi
 fi
 
-if [[ $( gh release view "${RELEASE_VERSION}" --repo "${ASSETS_REPOSITORY}" 2>&1 ) =~ "release not found" ]]; then
+if [[ "${UPLOAD_TO_LATEST_TAG}" != "yes" ]] && [[ $( gh release view "${RELEASE_VERSION}" --repo "${ASSETS_REPOSITORY}" 2>&1 ) =~ "release not found" ]]; then
   echo "Creating release '${RELEASE_VERSION}' (title: '${RELEASE_TITLE}')"
 
   if [[ "${VSCODE_QUALITY}" == "insider" ]]; then

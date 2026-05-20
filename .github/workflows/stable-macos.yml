@@ -138,6 +138,13 @@ jobs:
         run: ./release.sh
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes' && env.SHOULD_DEPLOY == 'yes'
 
+      - name: Upload to latest release
+        env:
+          GITHUB_TOKEN: ${{ secrets.STRONGER_GITHUB_TOKEN }}
+          UPLOAD_TO_LATEST_TAG: 'yes'
+        run: ./release.sh
+        if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes' && env.SHOULD_DEPLOY == 'no'
+
       - name: Update versions repo
         env:
           FORCE_UPDATE: ${{ github.event.inputs.force_version }}
