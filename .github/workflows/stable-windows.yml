@@ -41,7 +41,8 @@ env:
 
 jobs:
   build_windows:
-    runs-on: windows-2022
+    # windows-2025 : runner actuel ; MSVC 2022 forcé ci-dessous pour node-gyp (addons VS Code).
+    runs-on: windows-2025
     strategy:
       fail-fast: false
       matrix:
@@ -90,12 +91,12 @@ jobs:
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
 
       - name: Download vscode artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: vscode
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
@@ -143,7 +144,7 @@ jobs:
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes' && env.SHOULD_DEPLOY == 'yes'
 
       - name: Upload assets
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: void-windows-${{ matrix.vscode_arch }}
           path: assets/
