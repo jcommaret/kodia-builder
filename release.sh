@@ -13,24 +13,6 @@ REPOSITORY_NAME="${ASSETS_REPOSITORY/*\//}"
 
 npm install -g github-release-cli
 
-apply_release_notes() {
-  . ./utils.sh
-
-  VOID_VERSION="${VOID_VERSION:-${RELEASE_VERSION}}"
-  VOID_BUILDER_REPO="${VOID_BUILDER_REPO:-${GITHUB_REPOSITORY}}"
-  NOTES_FILE="${RUNNER_TEMP:-/tmp}/release_notes.rendered.md"
-
-  cp release_notes.txt "${NOTES_FILE}"
-
-  replace "s|ASSETS_REPOSITORY|${ASSETS_REPOSITORY}|g" "${NOTES_FILE}"
-  replace "s|VOID_BUILDER_REPO|${VOID_BUILDER_REPO}|g" "${NOTES_FILE}"
-  replace "s|MS_TAG|${MS_TAG}|" "${NOTES_FILE}"
-  replace "s|RELEASE_VERSION|${RELEASE_VERSION}|g" "${NOTES_FILE}"
-  replace "s|VOID_VERSION|${VOID_VERSION}|g" "${NOTES_FILE}"
-
-  gh release edit "${RELEASE_VERSION}" --repo "${ASSETS_REPOSITORY}" --notes-file "${NOTES_FILE}"
-}
-
 if [[ "${UPLOAD_TO_LATEST_TAG}" == "yes" ]]; then
   echo "Resolving latest release on ${ASSETS_REPOSITORY}..."
   RELEASE_VERSION=$( gh release list --repo "${ASSETS_REPOSITORY}" --limit 1 --json tagName --jq '.[0].tagName // empty' )
@@ -61,10 +43,7 @@ if [[ "${UPLOAD_TO_LATEST_TAG}" != "yes" ]] && [[ $( gh release view "${RELEASE_
     gh release create "${RELEASE_VERSION}" --repo "${ASSETS_REPOSITORY}" --title "${RELEASE_TITLE}" --notes "${NOTES}"
   else
     gh release create "${RELEASE_VERSION}" --repo "${ASSETS_REPOSITORY}" --title "${RELEASE_TITLE}" --notes ""
-    apply_release_notes
   fi
-elif [[ "${UPLOAD_TO_LATEST_TAG}" == "yes" && "${UPDATE_RELEASE_NOTES}" != "no" ]]; then
-  apply_release_notes
 fi
 
 cd assets
