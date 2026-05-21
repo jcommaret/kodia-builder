@@ -23,7 +23,12 @@ if [[ "${CI_BUILD}" != "no" ]]; then
 fi
 
 VOID_REPO="${VOID_REPO:-${GH_REPO_PATH:-voideditor/void}}"
-VOID_BRANCH="main"
+
+if [[ -z "${VOID_BRANCH}" ]]; then
+  VOID_BRANCH=$( git ls-remote --symref "https://github.com/${VOID_REPO}.git" HEAD 2>/dev/null | awk '/^ref:/ { sub("refs/heads/", "", $2); print $2; exit }' )
+fi
+VOID_BRANCH="${VOID_BRANCH:-master}"
+
 echo "Cloning void ${VOID_REPO} (${VOID_BRANCH})..."
 
 mkdir -p vscode
@@ -32,14 +37,8 @@ cd vscode || { echo "'vscode' dir not found"; exit 1; }
 git init -q
 git remote add origin "https://github.com/${VOID_REPO}.git"
 
-# Allow callers to specify a particular commit to checkout via the
-# environment variable VOID_COMMIT.  We still default to the tip of the
-# ${VOID_BRANCH} branch when the variable is not provided.  Keeping
-# VOID_BRANCH as "main" ensures the rest of the script (and downstream
-# consumers) behave exactly as before.
 if [[ -n "${VOID_COMMIT}" ]]; then
   echo "Using explicit commit ${VOID_COMMIT}"
-  # Fetch just that commit to keep the clone shallow.
   git fetch --depth 1 origin "${VOID_COMMIT}"
   git checkout "${VOID_COMMIT}"
 else
@@ -51,7 +50,7 @@ MS_VERSION=$( jq -r '.version' "package.json" )
 MS_VERSION="${MS_VERSION%%-*}"
 # Tag release : base VS Code en major.minor.patch (ex. 1.99.3).
 MS_TAG="${MS_VERSION}"
-MS_COMMIT=$VOID_BRANCH # Void - MS_COMMIT doesn't seem to do much
+MS_COMMIT=$( git rev-parse HEAD )
 VOID_VERSION=$( jq -r '.voidVersion // empty' "product.json" )
 [[ "${VOID_VERSION}" == "null" ]] && VOID_VERSION=""
 
