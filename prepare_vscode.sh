@@ -210,7 +210,17 @@ cat product.json
 # package.json
 cp package.json{,.bak}
 
-setpath "package" "version" "${RELEASE_VERSION%-insider}"
+# Inno Setup (VersionInfoVersion) : 4 segments numériques — base VS Code (MS_TAG), pas le tag composite Void.
+package_version="${MS_TAG:-${RELEASE_VERSION%-insider}}"
+package_version="${package_version%%-*}"
+if [[ "${package_version}" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+  package_version="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.$((10#${BASH_REMATCH[3]})).0"
+elif [[ ! "${package_version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  echo "Invalid package.json version for Windows/Inno: ${package_version}" >&2
+  exit 1
+fi
+echo "package.json version (Inno): ${package_version} (RELEASE_VERSION=${RELEASE_VERSION})"
+setpath "package" "version" "${package_version}"
 
 replace 's|Microsoft Corporation|Void|' package.json
 
