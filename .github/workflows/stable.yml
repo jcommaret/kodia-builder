@@ -2,6 +2,11 @@
 # Jobs détaillés dans stable-*.yml (workflow_call). Un seul compile par exécution.
 name: stable
 
+# Évite deux runs qui bumpent 1.5.0 puis 1.6.0 et répartissent les assets sur deux releases.
+concurrency:
+  group: stable-release-${{ github.repository }}
+  cancel-in-progress: false
+
 on:
   workflow_dispatch:
     inputs:

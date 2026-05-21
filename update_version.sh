@@ -38,8 +38,11 @@ if [[ -z "${BUILD_SOURCEVERSION}" ]]; then
 fi
 
 # --- Gestion de la version persistante ---
-# Si RELEASE_VERSION n'est pas défini, tente de le récupérer depuis un fichier VERSION
 if [[ -z "${RELEASE_VERSION}" ]]; then
+  if [[ -n "${GITHUB_ACTIONS}" ]]; then
+    echo "RELEASE_VERSION must be set in CI (from the check job). Exiting."
+    exit 1
+  fi
   if [[ -f "VERSION" ]]; then
     RELEASE_VERSION=$(cat VERSION)
     echo "Using RELEASE_VERSION from VERSION file: ${RELEASE_VERSION}"

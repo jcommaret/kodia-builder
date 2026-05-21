@@ -29,16 +29,9 @@ fi
 
 echo "Uploading assets to ${ASSETS_REPOSITORY} release tag: ${RELEASE_VERSION}"
 
-if [[ $( gh release view "${RELEASE_VERSION}" --repo "${ASSETS_REPOSITORY}" 2>&1 ) =~ "release not found" ]]; then
-  echo "Creating release '${RELEASE_VERSION}' (title: '${RELEASE_TITLE}')"
-
-  if [[ "${VSCODE_QUALITY}" == "insider" ]]; then
-    NOTES="update vscode to [${MS_COMMIT}](https://github.com/microsoft/vscode/tree/${MS_COMMIT})"
-
-    gh release create "${RELEASE_VERSION}" --repo "${ASSETS_REPOSITORY}" --title "${RELEASE_TITLE}" --notes "${NOTES}"
-  else
-    gh release create "${RELEASE_VERSION}" --repo "${ASSETS_REPOSITORY}" --title "${RELEASE_TITLE}" --notes ""
-  fi
+if ! gh release view "${RELEASE_VERSION}" --repo "${ASSETS_REPOSITORY}" &>/dev/null; then
+  echo "Release '${RELEASE_VERSION}' does not exist. Run release_create.sh in the check job first."
+  exit 1
 fi
 
 cd assets

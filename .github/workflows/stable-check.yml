@@ -68,6 +68,12 @@ jobs:
           env.INCREMENT_VERSION == 'yes' &&
           (github.event_name != 'workflow_dispatch' || github.event.inputs.increment_version != false)
 
+      - name: Create GitHub release
+        env:
+          GITHUB_TOKEN: ${{ secrets.STRONGER_GITHUB_TOKEN }}
+        run: ./release_create.sh
+        if: env.SHOULD_BUILD == 'yes'
+
       - name: Check existing VSCodium tags/releases
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
