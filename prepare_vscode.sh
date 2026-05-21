@@ -36,6 +36,10 @@ for file in ../patches/*.patch; do
   fi
 done
 
+if [[ -x "../patches/helper/apply_policy_watcher_lock.sh" ]]; then
+  ../patches/helper/apply_policy_watcher_lock.sh
+fi
+
 if [[ "${VSCODE_QUALITY}" == "insider" ]]; then
   echo "Applying insider patches..." # Void comment
   for file in ../patches/insider/*.patch; do
