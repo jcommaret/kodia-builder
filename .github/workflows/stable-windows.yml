@@ -65,6 +65,7 @@ jobs:
       VSCODE_ARCH: ${{ matrix.vscode_arch }}
       OS_NAME: windows
       npm_config_msvs_version: '2022'
+      VOID_BUILDER_ROOT: ${{ github.workspace }}
 
     steps:
       - uses: actions/checkout@v5

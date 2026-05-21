@@ -65,6 +65,7 @@ jobs:
       SHOULD_DEPLOY: ${{ inputs.SHOULD_DEPLOY }}
       VSCODE_ARCH: ${{ matrix.vscode_arch }}
       OS_NAME: linux
+      VOID_BUILDER_ROOT: ${{ github.workspace }}
 
     steps:
       - uses: actions/checkout@v5

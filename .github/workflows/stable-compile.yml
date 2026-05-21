@@ -52,6 +52,7 @@ jobs:
       VOID_VERSION: ${{ inputs.VOID_VERSION }}
       SHOULD_BUILD: ${{ inputs.SHOULD_BUILD }}
       VSCODE_ARCH: x64
+      VOID_BUILDER_ROOT: ${{ github.workspace }}
 
     steps:
       - uses: actions/checkout@v5

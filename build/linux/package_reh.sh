@@ -7,7 +7,11 @@ if [[ "${CI_BUILD}" == "no" ]]; then
   exit 1
 fi
 
-VOID_BUILDER_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+VOID_BUILDER_ROOT="${VOID_BUILDER_ROOT:-${GITHUB_WORKSPACE:-}}"
+if [[ -z "${VOID_BUILDER_ROOT}" ]]; then
+  VOID_BUILDER_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+fi
+export VOID_BUILDER_ROOT
 # shellcheck source=scripts/lib/utils.sh
 . "${VOID_BUILDER_ROOT}/scripts/lib/utils.sh"
 

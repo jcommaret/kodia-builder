@@ -7,7 +7,11 @@ if [[ "${CI_BUILD}" == "no" ]]; then
   exit 1
 fi
 
-VOID_BUILDER_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+VOID_BUILDER_ROOT="${VOID_BUILDER_ROOT:-${GITHUB_WORKSPACE:-}}"
+if [[ -z "${VOID_BUILDER_ROOT}" ]]; then
+  VOID_BUILDER_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+fi
+export VOID_BUILDER_ROOT
 
 tar -xzf ./vscode.tar.gz
 
@@ -32,7 +36,6 @@ node build/azure-pipelines/distro/mixin-npm
 
 npm run gulp "vscode-win32-${VSCODE_ARCH}-min-ci"
 
-VOID_BUILDER_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 . "${VOID_BUILDER_ROOT}/scripts/build_cli.sh"
 
 if [[ "${VSCODE_ARCH}" == "x64" ]]; then

@@ -68,6 +68,7 @@ jobs:
       SHOULD_DEPLOY: ${{ inputs.SHOULD_DEPLOY }}
       VSCODE_ARCH: ${{ matrix.vscode_arch }}
       OS_NAME: linux
+      VOID_BUILDER_ROOT: ${{ github.workspace }}
 
     steps:
       - uses: actions/checkout@v5
@@ -125,6 +126,9 @@ jobs:
         env:
           SHOULD_BUILD_REH: 'no'
           SHOULD_BUILD_REH_WEB: 'no'
+          # .deb/.rpm : dpkg-shlibdeps échoue sur sharp dans l’arbre VSCode-linux-* (CI = tar.gz)
+          SHOULD_BUILD_DEB: 'no'
+          SHOULD_BUILD_RPM: 'no'
         run: ./prepare_assets.sh
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
 
