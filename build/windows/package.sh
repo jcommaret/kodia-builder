@@ -7,9 +7,15 @@ if [[ "${CI_BUILD}" == "no" ]]; then
   exit 1
 fi
 
+VOID_BUILDER_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+
 tar -xzf ./vscode.tar.gz
 
 cd vscode || { echo "'vscode' dir not found"; exit 1; }
+
+# shellcheck source=scripts/lib/ci_lib.sh
+source "${VOID_BUILDER_ROOT}/scripts/lib/ci_lib.sh"
+ci_apply_void_version
 
 for i in {1..5}; do # try 5 times
   npm ci && break

@@ -33,13 +33,13 @@ jobs:
   check:
     runs-on: ubuntu-latest
     outputs:
-      MS_COMMIT: ${{ env.MS_COMMIT }}
-      MS_TAG: ${{ env.MS_TAG }}
-      RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
+      MS_COMMIT: ${{ steps.check.outputs.MS_COMMIT || env.MS_COMMIT }}
+      MS_TAG: ${{ steps.check.outputs.MS_TAG || env.MS_TAG }}
+      RELEASE_VERSION: ${{ steps.check.outputs.RELEASE_VERSION || env.RELEASE_VERSION }}
       RELEASE_TITLE: ${{ env.RELEASE_TITLE }}
-      VOID_VERSION: ${{ env.VOID_VERSION }}
-      SHOULD_BUILD: ${{ env.SHOULD_BUILD }}
-      SHOULD_DEPLOY: ${{ env.SHOULD_DEPLOY }}
+      VOID_VERSION: ${{ steps.check.outputs.VOID_VERSION || env.VOID_VERSION }}
+      SHOULD_BUILD: ${{ steps.check.outputs.SHOULD_BUILD || env.SHOULD_BUILD }}
+      SHOULD_DEPLOY: ${{ steps.check.outputs.SHOULD_DEPLOY || env.SHOULD_DEPLOY }}
 
     steps:
       - uses: actions/checkout@v5
@@ -54,6 +54,7 @@ jobs:
         run: ./ci_repo.sh
 
       - name: CI check (versions, release, flags)
+        id: check
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           STRONGER_GITHUB_TOKEN: ${{ secrets.STRONGER_GITHUB_TOKEN }}

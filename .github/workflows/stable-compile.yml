@@ -67,6 +67,12 @@ jobs:
         run: ./ci_repo.sh
         if: env.SHOULD_BUILD == 'yes'
 
+      - name: Pin voidVersion in vscode tree
+        run: |
+          source scripts/lib/ci_lib.sh
+          ci_apply_void_version
+        if: env.SHOULD_BUILD == 'yes' && env.VOID_VERSION != ''
+
       - name: Setup GCC
         uses: egor-tensin/setup-gcc@v2
         with:

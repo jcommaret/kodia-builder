@@ -17,6 +17,10 @@ chown -R root:root vscode
 
 cd vscode || { echo "'vscode' dir not found"; exit 1; }
 
+# shellcheck source=scripts/lib/ci_lib.sh
+source "${VOID_BUILDER_ROOT}/scripts/lib/ci_lib.sh"
+ci_apply_void_version
+
 export VSCODE_PLATFORM='linux'
 export VSCODE_SKIP_NODE_VERSION_CHECK=1
 export VSCODE_SYSROOT_PREFIX='-glibc-2.28'

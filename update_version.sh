@@ -3,12 +3,19 @@
 
 set -e
 
-# voidVersion : la racine du builder n’a souvent pas la clé ; elle est dans vscode/product.json après merge (prepare_vscode).
-voidVersion=$(jq -r '.voidVersion // empty' product.json)
+# voidVersion : priorité à VOID_VERSION (job check), comme prepare_assets.sh
+voidVersion="${VOID_VERSION:-}"
 [[ "${voidVersion}" == "null" ]] && voidVersion=""
-if [[ -z "${voidVersion}" ]] && [[ -f vscode/product.json ]]; then
-  voidVersion=$(jq -r '.voidVersion // empty' vscode/product.json)
+if [[ -z "${voidVersion}" ]]; then
+  voidVersion=$(jq -r '.voidVersion // empty' product.json 2>/dev/null || true)
   [[ "${voidVersion}" == "null" ]] && voidVersion=""
+fi
+if [[ -z "${voidVersion}" ]] && [[ -f vscode/product.json ]]; then
+    voidVersion=$(jq -r '.voidVersion // empty' vscode/product.json)
+    [[ "${voidVersion}" == "null" ]] && voidVersion=""
+fi
+if [[ -z "${voidVersion}" && -n "${RELEASE_VERSION}" && "${RELEASE_VERSION}" == *-* ]]; then
+  voidVersion="${RELEASE_VERSION#*-}"
 fi
 # Doit rester aligné avec prepare_assets.sh / release.sh (PAS un nom codé en dur « voidversion »).
 APP_NAME="${APP_NAME:-Void}"

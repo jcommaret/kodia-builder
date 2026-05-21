@@ -102,6 +102,27 @@ ci_latest_void_from_releases() {
   done <<< "${tags}" | sort -V | tail -1
 }
 
+# Aligne vscode/product.json sur VOID_VERSION (job check / inputs workflow).
+ci_apply_void_version() {
+  if [[ -z "${VOID_VERSION:-}" ]] || [[ ! -f vscode/product.json ]]; then
+    return 0
+  fi
+
+  local current
+  current=$( jq -r '.voidVersion // empty' vscode/product.json )
+  [[ "${current}" == "null" ]] && current=""
+
+  if [[ "${current}" == "${VOID_VERSION}" ]]; then
+    return 0
+  fi
+
+  echo "vscode/product.json voidVersion: ${current:-<empty>} -> ${VOID_VERSION}"
+  local tmp
+  tmp=$(mktemp)
+  jq --arg v "${VOID_VERSION}" '.voidVersion = $v' vscode/product.json > "${tmp}"
+  mv "${tmp}" vscode/product.json
+}
+
 ci_bump_version_write_env() {
   if [[ ! "${GITHUB_ENV}" ]]; then
     return 0
@@ -213,9 +234,9 @@ ci_check_tags() {
   GITHUB_TOKEN="${GH_TOKEN:-${GITHUB_TOKEN:-${GH_ENTERPRISE_TOKEN:-${GITHUB_ENTERPRISE_TOKEN}}}}"
   GH_HOST="${GH_HOST:-github.com}"
 
-  echo "Always building from main branch"
-  export SHOULD_BUILD="yes"
-  export SHOULD_DEPLOY="yes"
+  echo "Platform build flags (preserve SHOULD_BUILD/SHOULD_DEPLOY from check job when set)"
+  export SHOULD_BUILD="${SHOULD_BUILD:-yes}"
+  export SHOULD_DEPLOY="${SHOULD_DEPLOY:-yes}"
 
   export SHOULD_BUILD_APPIMAGE="yes"
   export SHOULD_BUILD_DEB="yes"

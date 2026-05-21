@@ -23,4 +23,16 @@ fi
 
 ci_check_tags
 
+if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+  {
+    echo "MS_COMMIT=${MS_COMMIT}"
+    echo "MS_TAG=${MS_TAG}"
+    echo "RELEASE_VERSION=${RELEASE_VERSION}"
+    echo "VOID_VERSION=${VOID_VERSION}"
+    echo "SHOULD_BUILD=${SHOULD_BUILD}"
+    echo "SHOULD_DEPLOY=${SHOULD_DEPLOY}"
+  } >> "${GITHUB_OUTPUT}"
+fi
+
 echo "=== CI check done ==="
+echo "RELEASE_VERSION=${RELEASE_VERSION} VOID_VERSION=${VOID_VERSION}"

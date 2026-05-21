@@ -17,6 +17,10 @@ tar -xzf ./vscode.tar.gz
 
 cd vscode || { echo "'vscode' dir not found"; exit 1; }
 
+# shellcheck source=scripts/lib/ci_lib.sh
+source "${VOID_BUILDER_ROOT}/scripts/lib/ci_lib.sh"
+ci_apply_void_version
+
 GLIBC_VERSION="2.28"
 GLIBCXX_VERSION="3.4.26"
 NODE_VERSION="22.22.2"

@@ -61,17 +61,30 @@ ci_repo_void() {
   MS_VERSION="${MS_VERSION%%-*}"
   MS_TAG="${MS_VERSION}"
   MS_COMMIT=$( git rev-parse HEAD )
-  VOID_VERSION=$( jq -r '.voidVersion // empty' "product.json" )
-  [[ "${VOID_VERSION}" == "null" ]] && VOID_VERSION=""
-
-  if [[ -n "${VOID_VERSION}" ]]; then
-    RELEASE_VERSION="${MS_TAG}-${VOID_VERSION}"
-    RELEASE_TITLE="${MS_TAG} - ${VOID_VERSION}"
+  local pin_versions=false
+  if [[ -n "${RELEASE_VERSION:-}" && -n "${VOID_VERSION:-}" ]]; then
+    pin_versions=true
+    echo "Keeping pinned versions RELEASE_VERSION=${RELEASE_VERSION} VOID_VERSION=${VOID_VERSION}"
   else
-    RELEASE_VERSION="${MS_TAG}"
-    RELEASE_TITLE="${MS_TAG}"
+    VOID_VERSION=$( jq -r '.voidVersion // empty' "product.json" )
+    [[ "${VOID_VERSION}" == "null" ]] && VOID_VERSION=""
+
+    if [[ -n "${VOID_VERSION}" ]]; then
+      RELEASE_VERSION="${MS_TAG}-${VOID_VERSION}"
+      RELEASE_TITLE="${MS_TAG} - ${VOID_VERSION}"
+    else
+      RELEASE_VERSION="${MS_TAG}"
+      RELEASE_TITLE="${MS_TAG}"
+    fi
+    [[ -z "${VOID_VERSION}" ]] && VOID_VERSION="${RELEASE_VERSION}"
   fi
-  [[ -z "${VOID_VERSION}" ]] && VOID_VERSION="${RELEASE_VERSION}"
+
+  if [[ -n "${VOID_VERSION:-}" ]]; then
+    REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    # shellcheck source=scripts/lib/ci_lib.sh
+    source "${REPO_ROOT}/scripts/lib/ci_lib.sh"
+    ci_apply_void_version
+  fi
 
   echo "RELEASE_TITLE=\"${RELEASE_TITLE}\""
   echo "RELEASE_VERSION=\"${RELEASE_VERSION}\""
@@ -84,13 +97,15 @@ ci_repo_void() {
   if [[ "${GITHUB_ENV}" ]]; then
     echo "MS_TAG=${MS_TAG}" >> "${GITHUB_ENV}"
     echo "MS_COMMIT=${MS_COMMIT}" >> "${GITHUB_ENV}"
-    echo "RELEASE_VERSION=${RELEASE_VERSION}" >> "${GITHUB_ENV}"
-    echo "VOID_VERSION=${VOID_VERSION}" >> "${GITHUB_ENV}"
-    {
-      echo "RELEASE_TITLE<<GITHUB_RELEASE_TITLE"
-      echo "${RELEASE_TITLE}"
-      echo "GITHUB_RELEASE_TITLE"
-    } >> "${GITHUB_ENV}"
+    if [[ "${pin_versions}" != "true" ]]; then
+      echo "RELEASE_VERSION=${RELEASE_VERSION}" >> "${GITHUB_ENV}"
+      echo "VOID_VERSION=${VOID_VERSION}" >> "${GITHUB_ENV}"
+      {
+        echo "RELEASE_TITLE<<GITHUB_RELEASE_TITLE"
+        echo "${RELEASE_TITLE}"
+        echo "GITHUB_RELEASE_TITLE"
+      } >> "${GITHUB_ENV}"
+    fi
   fi
 
   export MS_TAG MS_COMMIT RELEASE_VERSION RELEASE_TITLE VOID_VERSION

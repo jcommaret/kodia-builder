@@ -3,12 +3,19 @@
 
 set -e
 
-# voidVersion : même logique que update_version.sh (voir racine vs vscode/product.json).
-voidVersion=$(jq -r '.voidVersion // empty' product.json)
+# voidVersion : priorité VOID_VERSION du job check (évite l’ancienne valeur dans product.json).
+voidVersion="${VOID_VERSION:-}"
 [[ "${voidVersion}" == "null" ]] && voidVersion=""
+if [[ -z "${voidVersion}" ]]; then
+  voidVersion=$(jq -r '.voidVersion // empty' product.json 2>/dev/null || true)
+  [[ "${voidVersion}" == "null" ]] && voidVersion=""
+fi
 if [[ -z "${voidVersion}" ]] && [[ -f vscode/product.json ]]; then
   voidVersion=$(jq -r '.voidVersion // empty' vscode/product.json)
   [[ "${voidVersion}" == "null" ]] && voidVersion=""
+fi
+if [[ -z "${voidVersion}" && -n "${RELEASE_VERSION}" && "${RELEASE_VERSION}" == *-* ]]; then
+  voidVersion="${RELEASE_VERSION#*-}"
 fi
 
 APP_NAME="${APP_NAME:-Void}"
