@@ -22,14 +22,15 @@ if [[ "${CI_BUILD}" != "no" ]]; then
   git config --global --add safe.directory "/__w/$( echo "${GITHUB_REPOSITORY}" | awk '{print tolower($0)}' )"
 fi
 
+VOID_REPO="${VOID_REPO:-${GH_REPO_PATH:-voideditor/void}}"
 VOID_BRANCH="main"
-echo "Cloning void ${VOID_BRANCH}..."
+echo "Cloning void ${VOID_REPO} (${VOID_BRANCH})..."
 
 mkdir -p vscode
 cd vscode || { echo "'vscode' dir not found"; exit 1; }
 
 git init -q
-git remote add origin https://github.com/voideditor/void.git
+git remote add origin "https://github.com/${VOID_REPO}.git"
 
 # Allow callers to specify a particular commit to checkout via the
 # environment variable VOID_COMMIT.  We still default to the tip of the
@@ -46,7 +47,10 @@ else
   git checkout FETCH_HEAD
 fi
 
-MS_TAG=$( jq -r '.version' "package.json" )
+MS_VERSION=$( jq -r '.version' "package.json" )
+MS_VERSION="${MS_VERSION%%-*}"
+# Tag release : base VS Code en major.minor.patch (ex. 1.99.3).
+MS_TAG="${MS_VERSION}"
 MS_COMMIT=$VOID_BRANCH # Void - MS_COMMIT doesn't seem to do much
 VOID_VERSION=$( jq -r '.voidVersion // empty' "product.json" )
 [[ "${VOID_VERSION}" == "null" ]] && VOID_VERSION=""
@@ -65,6 +69,7 @@ fi
 echo "RELEASE_TITLE=\"${RELEASE_TITLE}\""
 echo "RELEASE_VERSION=\"${RELEASE_VERSION}\""
 echo "MS_COMMIT=\"${MS_COMMIT}\""
+echo "MS_VERSION=\"${MS_VERSION}\""
 echo "MS_TAG=\"${MS_TAG}\""
 
 cd ..
@@ -86,6 +91,7 @@ fi
 
 
 echo "----------- get_repo exports -----------"
+echo "MS_VERSION ${MS_VERSION}"
 echo "MS_TAG ${MS_TAG}"
 echo "MS_COMMIT ${MS_COMMIT}"
 echo "RELEASE_VERSION ${RELEASE_VERSION}"
