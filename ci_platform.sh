@@ -10,5 +10,8 @@ source "${REPO_ROOT}/scripts/lib/ci_lib.sh"
 
 if [[ "${SKIP_GH_INSTALL}" != "yes" ]]; then
   ci_install_gh
+elif ! ci_ensure_gh_in_path; then
+  echo "SKIP_GH_INSTALL=yes mais gh introuvable" >&2
+  exit 1
 fi
 ci_check_tags

@@ -190,10 +190,24 @@ ci_bump_version() {
   export VOID_VERSION RELEASE_VERSION RELEASE_TITLE
 }
 
-ci_install_gh() {
-  set -ex
+ci_ensure_gh_in_path() {
+  if command -v gh &>/dev/null; then
+    return 0
+  fi
+  local win_gh
+  for win_gh in \
+    "/c/Program Files/GitHub CLI/gh.exe" \
+    "/c/Program Files (x86)/GitHub CLI/gh.exe" \
+    ; do
+    if [[ -x "${win_gh}" ]]; then
+      export PATH="$(dirname "${win_gh}"):${PATH}"
+      return 0
+    fi
+  done
+  return 1
+}
 
-  local GH_ARCH="amd64"
+ci_install_gh_fetch_tag() {
   local api_url="https://api.github.com/repos/cli/cli/releases/latest"
   local -a curl_opts=(
     -sS
@@ -210,18 +224,53 @@ ci_install_gh() {
   TAG="$( curl "${curl_opts[@]}" "$api_url" | jq --raw-output '.tag_name // empty' )"
 
   if [[ -z "${TAG}" || "${TAG}" == "null" ]]; then
-    echo "Impossible d'obtenir cli/cli latest via l'API (rate limit ou erreur) ; repli sur une version pinnée." >&2
+    echo "Impossible d'obtenir cli/cli latest via l'API ; repli sur version pinnée." >&2
     TAG="v2.74.0"
   fi
+  echo "${TAG}"
+}
 
-  local VERSION="${TAG#v}"
+ci_install_gh_add_to_path() {
+  local install_dir="${1}"
+  mkdir -p "${install_dir}"
+  export PATH="${install_dir}:${PATH}"
+  if [[ -n "${GITHUB_PATH:-}" ]]; then
+    echo "${install_dir}" >> "${GITHUB_PATH}"
+  fi
+}
 
-  curl --retry 12 --retry-delay 120 -sSL -f \
-    "https://github.com/cli/cli/releases/download/${TAG}/gh_${VERSION}_linux_${GH_ARCH}.tar.gz" \
-    -o "gh_${VERSION}_linux_${GH_ARCH}.tar.gz"
+ci_install_gh() {
+  set -ex
 
-  tar xf "gh_${VERSION}_linux_${GH_ARCH}.tar.gz"
-  cp "gh_${VERSION}_linux_${GH_ARCH}/bin/gh" /usr/local/bin/
+  if ci_ensure_gh_in_path; then
+    echo "gh déjà disponible: $(gh --version | head -1)"
+    return 0
+  fi
+
+  local TAG VERSION GH_ARCH="amd64"
+  TAG="$(ci_install_gh_fetch_tag)"
+  VERSION="${TAG#v}"
+
+  local install_dir="${VOID_BUILDER_ROOT:-${GITHUB_WORKSPACE:-${PWD}}}/.ci-bin"
+  ci_install_gh_add_to_path "${install_dir}"
+
+  if [[ "${OS_NAME}" == "windows" || "${RUNNER_OS}" == "Windows" ]]; then
+    local archive="gh_${VERSION}_windows_${GH_ARCH}.zip"
+    curl --retry 12 --retry-delay 120 -sSL -f \
+      "https://github.com/cli/cli/releases/download/${TAG}/${archive}" \
+      -o "${archive}"
+    unzip -q -o "${archive}"
+    install -m 755 "gh_${VERSION}_windows_${GH_ARCH}/bin/gh.exe" "${install_dir}/gh.exe"
+    ln -sf gh.exe "${install_dir}/gh" 2>/dev/null || cp "${install_dir}/gh.exe" "${install_dir}/gh"
+  else
+    local archive="gh_${VERSION}_linux_${GH_ARCH}.tar.gz"
+    curl --retry 12 --retry-delay 120 -sSL -f \
+      "https://github.com/cli/cli/releases/download/${TAG}/${archive}" \
+      -o "${archive}"
+    tar xf "${archive}"
+    install -m 755 "gh_${VERSION}_linux_${GH_ARCH}/bin/gh" "${install_dir}/gh"
+  fi
+
   gh --version
 }
 
