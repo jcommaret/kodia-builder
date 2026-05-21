@@ -12,6 +12,8 @@ The  `.patch` files from VSCodium get rid of telemetry in Void (the core purpose
 
 - **Orchestrateur unique** : `.github/workflows/stable.yml` enchaîne un job `check`, un job `compile` (une seule compilation des sources), puis lance en parallèle les builds macOS, Linux (app), Windows et Linux REH. Évitez d’ajouter d’autres workflows avec les mêmes `on:` pour ne pas refaire `compile` trois fois sur chaque push.
 
+- **Scripts shell** : points d’entrée à la racine (`ci_*.sh`, `build.sh`, …) ; bibliothèques et helpers dans [`scripts/`](scripts/) — voir [`docs/SCRIPTS.md`](docs/SCRIPTS.md).
+
 - If you want to build and compile Void yourself, you just need to fork this repo and run the GitHub Workflows. If you want to handle auto updates too, just search for caps-sensitive "Void" and "voideditor" and replace them with your own repo.
 
 ## Rebasing

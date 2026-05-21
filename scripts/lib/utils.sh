@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+# Racine du dépôt void-builder (scripts/lib → ../..)
+if [[ -z "${VOID_BUILDER_ROOT:-}" ]]; then
+  VOID_BUILDER_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+  export VOID_BUILDER_ROOT
+fi
+
 APP_NAME="${APP_NAME:-Void}"
 APP_NAME_LC="$( echo "${APP_NAME}" | awk '{print tolower($0)}' )"
 BINARY_NAME="${BINARY_NAME:-void}"
@@ -63,3 +69,33 @@ if ! exists gsed; then
     }
   fi
 fi
+
+ensure_build_sourceversion() {
+  if [[ -n "${BUILD_SOURCEVERSION}" ]]; then
+    export BUILD_SOURCEVERSION
+    return 0
+  fi
+
+  echo "Computing BUILD_SOURCEVERSION..."
+
+  if [[ -d "./vscode" ]]; then
+    local CURRENT_DIR
+    CURRENT_DIR=$(pwd)
+    cd ./vscode
+    BUILD_SOURCEVERSION=$(git rev-parse HEAD)
+    cd "${CURRENT_DIR}"
+  else
+    if ! command -v checksum &>/dev/null; then
+      npm install -g checksum
+    fi
+    BUILD_SOURCEVERSION=$( echo "${RELEASE_VERSION/-*/}" | checksum )
+  fi
+
+  echo "BUILD_SOURCEVERSION=\"${BUILD_SOURCEVERSION}\""
+
+  if [[ "${GITHUB_ENV}" ]]; then
+    echo "BUILD_SOURCEVERSION=${BUILD_SOURCEVERSION}" >> "${GITHUB_ENV}"
+  fi
+
+  export BUILD_SOURCEVERSION
+}

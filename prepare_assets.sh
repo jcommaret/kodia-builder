@@ -236,5 +236,17 @@ if [[ "${SHOULD_BUILD_REH_WEB}" != "no" ]]; then
 fi
 
 if [[ "${OS_NAME}" != "windows" ]]; then
-  ./prepare_checksums.sh
+  if ! command -v checksum &>/dev/null; then
+    npm install -g checksum
+  fi
+  (
+    cd assets
+    for FILE in *; do
+      if [[ -f "${FILE}" ]]; then
+        echo "Calculating checksum for ${FILE}"
+        checksum -a sha256 "${FILE}" > "${FILE}.sha256"
+        checksum "${FILE}" > "${FILE}.sha1"
+      fi
+    done
+  )
 fi

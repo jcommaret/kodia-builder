@@ -11,8 +11,12 @@ SEARCH="\.data\.microsoft\.com"
 REPLACEMENT="s|//[^/]+\.data\.microsoft\.com|//0\.0\.0\.0|g"
 
 echo "----------- undo_telemetry -----------"
-# include common functions
-. ../utils.sh
+if [[ -z "${VOID_BUILDER_ROOT:-}" ]]; then
+  VOID_BUILDER_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+  export VOID_BUILDER_ROOT
+fi
+# shellcheck source=lib/utils.sh
+. "${VOID_BUILDER_ROOT}/scripts/lib/utils.sh"
 
 
 if is_gnu_sed; then

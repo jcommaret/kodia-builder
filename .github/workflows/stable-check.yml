@@ -46,36 +46,17 @@ jobs:
         with:
           ref: ${{ env.GITHUB_BRANCH }}
 
-      - name: Switch to relevant branch
+      - name: Checkout builder PR and clone Void
         env:
           PULL_REQUEST_ID: ${{ github.event.inputs.checkout_pr }}
-        run: ./get_pr.sh
-
-      - name: Clone VSCode repo
-        env:
           VOID_COMMIT: ${{ github.event.inputs.void_commit }}
           VOID_RELEASE: ${{ github.event.inputs.void_release }}
-        run: ./get_repo.sh
+        run: ./ci_repo.sh
 
-      - name: Check PR or cron
-        run: ./check_cron_or_pr.sh
-
-      - name: Increment version
+      - name: CI check (versions, release, flags)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./bump_version.sh
-        if: >-
-          env.INCREMENT_VERSION == 'yes' &&
-          (github.event_name != 'workflow_dispatch' || github.event.inputs.increment_version != false)
-
-      - name: Create GitHub release
-        env:
-          GITHUB_TOKEN: ${{ secrets.STRONGER_GITHUB_TOKEN }}
-        run: ./release_create.sh
-        if: env.SHOULD_BUILD == 'yes'
-
-      - name: Check existing VSCodium tags/releases
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          STRONGER_GITHUB_TOKEN: ${{ secrets.STRONGER_GITHUB_TOKEN }}
+          SKIP_VERSION_BUMP: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.increment_version == false && 'yes' || '' }}
           CHECK_ALL: 'yes'
-        run: ./check_tags.sh
+        run: ./ci_check.sh

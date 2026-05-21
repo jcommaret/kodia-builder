@@ -29,7 +29,9 @@ fi
 GH_HOST="${GH_HOST:-github.com}"
 
 if [[ "${FORCE_UPDATE}" == "true" ]]; then
-  . version.sh
+  # shellcheck source=scripts/lib/utils.sh
+  . scripts/lib/utils.sh
+  ensure_build_sourceversion
 fi
 
 if [[ -z "${BUILD_SOURCEVERSION}" ]]; then

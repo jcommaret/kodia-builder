@@ -45,7 +45,9 @@ echo "VSCODE_QUALITY=\"${VSCODE_QUALITY}\""
 
 rm -rf vscode* VSCode*
 
-. get_repo.sh
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=ci_repo.sh
+. "${REPO_ROOT}/ci_repo.sh" void
 . build.sh
 
 if [[ "${SKIP_ASSETS}" == "no" ]]; then

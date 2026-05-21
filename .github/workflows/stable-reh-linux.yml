@@ -75,7 +75,7 @@ jobs:
       - name: Switch to relevant branch
         env:
           PULL_REQUEST_ID: ${{ github.event.inputs.checkout_pr }}
-        run: ./get_pr.sh
+        run: ./ci_repo.sh pr
         if: env.DISABLED != 'yes'
 
       - name: Setup GCC
@@ -101,15 +101,11 @@ jobs:
         run: sudo apt-get update -y && sudo apt-get install -y libkrb5-dev
         if: env.DISABLED != 'yes'
 
-      - name: Install GH
-        run: ./install_gh.sh
-        if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
-
-      - name: Check existing VSCodium tags/releases
+      - name: Platform CI setup
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CHECK_ONLY_REH: 'yes'
-        run: ./check_tags.sh
+        run: ./ci_platform.sh
         if: env.DISABLED != 'yes'
 
       - name: Download vscode artifact
@@ -127,6 +123,7 @@ jobs:
 
       - name: Upload to GitHub release
         env:
+          STRONGER_GITHUB_TOKEN: ${{ secrets.STRONGER_GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.STRONGER_GITHUB_TOKEN }}
           GITHUB_USERNAME: ${{ github.repository_owner }}
         run: ./release.sh

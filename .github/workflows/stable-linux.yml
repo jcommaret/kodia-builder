@@ -75,22 +75,18 @@ jobs:
           ref: ${{ env.GITHUB_BRANCH }}
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
 
-      - name: Switch to relevant branch
+      - name: Checkout builder PR
         env:
           PULL_REQUEST_ID: ${{ github.event.inputs.checkout_pr }}
-        run: ./get_pr.sh
+        run: ./ci_repo.sh pr
         if: env.DISABLED != 'yes'
 
-      - name: Install GH
-        run: ./install_gh.sh
-        if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
-
-      - name: Check existing VSCodium tags/releases
+      - name: Platform CI setup
         env:
           CHECK_REH: 'no'
           DISABLE_APPIMAGE: ${{ vars.DISABLE_STABLE_APPIMAGE }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./check_tags.sh
+        run: ./ci_platform.sh
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
 
       - name: Add ubuntu-toolchain-r PPA keys
@@ -134,6 +130,7 @@ jobs:
 
       - name: Upload to GitHub release
         env:
+          STRONGER_GITHUB_TOKEN: ${{ secrets.STRONGER_GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.STRONGER_GITHUB_TOKEN }}
           GITHUB_USERNAME: ${{ github.repository_owner }}
         run: ./release.sh

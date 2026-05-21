@@ -7,8 +7,9 @@ if [[ "${CI_BUILD}" == "no" ]]; then
   exit 1
 fi
 
-# include common functions
-. ./utils.sh
+VOID_BUILDER_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+# shellcheck source=scripts/lib/utils.sh
+. "${VOID_BUILDER_ROOT}/scripts/lib/utils.sh"
 
 mkdir -p assets
 

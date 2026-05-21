@@ -3,8 +3,10 @@
 
 set -e
 
-# include common functions
-. ./utils.sh
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export VOID_BUILDER_ROOT="${REPO_ROOT}"
+# shellcheck source=scripts/lib/utils.sh
+. "${REPO_ROOT}/scripts/lib/utils.sh"
 
 # Void - disable icon copying, we already handled icons
 # if [[ "${VSCODE_QUALITY}" == "insider" ]]; then
@@ -18,7 +20,7 @@ set -e
 
 cd vscode || { echo "'vscode' dir not found"; exit 1; }
 
-../update_settings.sh
+"${REPO_ROOT}/scripts/update_settings.sh"
 
 # apply patches
 { set +x; } 2>/dev/null
@@ -236,7 +238,7 @@ fi
 # announcements
 # replace "s|\\[\\/\\* BUILTIN_ANNOUNCEMENTS \\*\\/\\]|$( tr -d '\n' < ../announcements-builtin.json )|" src/vs/workbench/contrib/welcomeGettingStarted/browser/gettingStarted.ts
 
-../undo_telemetry.sh
+"${REPO_ROOT}/scripts/undo_telemetry.sh"
 
 replace 's|Microsoft Corporation|Void|' build/lib/electron.js
 replace 's|Microsoft Corporation|Void|' build/lib/electron.ts

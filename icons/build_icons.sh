@@ -31,7 +31,9 @@ check_programs() { # {{{
 
 check_programs "icns2png" "composite" "convert" "png2icns" "icotool" "rsvg-convert" "sed"
 
-. ./utils.sh
+VOID_BUILDER_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=scripts/lib/utils.sh
+. "${VOID_BUILDER_ROOT}/scripts/lib/utils.sh"
 
 SRC_PREFIX=""
 VSCODE_PREFIX=""

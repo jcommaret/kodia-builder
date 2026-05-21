@@ -26,7 +26,8 @@ node build/azure-pipelines/distro/mixin-npm
 
 npm run gulp "vscode-win32-${VSCODE_ARCH}-min-ci"
 
-. ../build_cli.sh
+VOID_BUILDER_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+. "${VOID_BUILDER_ROOT}/scripts/build_cli.sh"
 
 if [[ "${VSCODE_ARCH}" == "x64" ]]; then
   if [[ "${SHOULD_BUILD_REH}" != "no" ]]; then

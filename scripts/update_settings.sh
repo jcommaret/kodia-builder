@@ -8,8 +8,12 @@ TELEMETRY_CRASH_REPORTER="'telemetry.enableCrashReporter':"
 TELEMETRY_CONFIGURATION=" TelemetryConfiguration.ON"
 NLS=workbench.settings.enableNaturalLanguageSearch
 
-# include common functions
-. ../utils.sh
+if [[ -z "${VOID_BUILDER_ROOT:-}" ]]; then
+  VOID_BUILDER_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+  export VOID_BUILDER_ROOT
+fi
+# shellcheck source=lib/utils.sh
+. "${VOID_BUILDER_ROOT}/scripts/lib/utils.sh"
 
 update_setting () {
   local FILENAME SETTING LINE_NUM IN_SETTING FOUND DEFAULT_TRUE_TO_FALSE

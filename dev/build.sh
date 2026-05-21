@@ -82,8 +82,12 @@ echo "VSCODE_QUALITY=\"${VSCODE_QUALITY}\""
 if [[ "${SKIP_SOURCE}" == "no" ]]; then
   rm -rf vscode* VSCode*
 
-  . get_repo.sh
-  . version.sh
+  REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+  # shellcheck source=ci_repo.sh
+  . "${REPO_ROOT}/ci_repo.sh" void
+  # shellcheck source=scripts/lib/utils.sh
+  . "${REPO_ROOT}/scripts/lib/utils.sh"
+  ensure_build_sourceversion
 
   # save variables for later
   echo "MS_TAG=\"${MS_TAG}\"" > dev/build.env

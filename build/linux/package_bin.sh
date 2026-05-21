@@ -7,8 +7,9 @@ if [[ "${CI_BUILD}" == "no" ]]; then
   exit 1
 fi
 
-# include common functions
-. ./utils.sh
+VOID_BUILDER_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+# shellcheck source=scripts/lib/utils.sh
+. "${VOID_BUILDER_ROOT}/scripts/lib/utils.sh"
 
 tar -xzf ./vscode.tar.gz
 
@@ -136,6 +137,6 @@ fi
 
 find "../VSCode-linux-${VSCODE_ARCH}" -print0 | xargs -0 touch -c
 
-. ../build_cli.sh
+. "${VOID_BUILDER_ROOT}/scripts/build_cli.sh"
 
 cd ..
