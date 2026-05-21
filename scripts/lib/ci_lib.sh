@@ -272,6 +272,13 @@ ci_check_tags() {
     fi
   fi
 
+  # Ne pas réactiver deb/rpm/appimage si le workflow les a désactivés (Linux CI = tar.gz).
+  if [[ "${OS_NAME}" == "linux" && "${SHOULD_BUILD_DEB}" == "no" ]]; then
+    export SHOULD_BUILD_DEB="no"
+    export SHOULD_BUILD_RPM="no"
+    export SHOULD_BUILD_APPIMAGE="no"
+  fi
+
   ci_write_github_env \
     "SHOULD_BUILD=${SHOULD_BUILD}" \
     "SHOULD_DEPLOY=${SHOULD_DEPLOY}" \

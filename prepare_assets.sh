@@ -3,6 +3,14 @@
 
 set -e
 
+# Linux CI : release tar.gz uniquement (deb/rpm/appimage → dpkg-shlibdeps + sharp)
+if [[ "${OS_NAME}" == "linux" && "${GITHUB_ACTIONS}" == "true" ]]; then
+  [[ "${SHOULD_BUILD_DEB}" == "yes" ]] || SHOULD_BUILD_DEB="no"
+  [[ "${SHOULD_BUILD_RPM}" == "yes" ]] || SHOULD_BUILD_RPM="no"
+  [[ "${SHOULD_BUILD_APPIMAGE}" == "yes" ]] || SHOULD_BUILD_APPIMAGE="no"
+  echo "Linux CI: DEB=${SHOULD_BUILD_DEB} RPM=${SHOULD_BUILD_RPM} APPIMAGE=${SHOULD_BUILD_APPIMAGE} TAR=${SHOULD_BUILD_TAR:-yes}"
+fi
+
 # voidVersion : priorité VOID_VERSION du job check (évite l’ancienne valeur dans product.json).
 voidVersion="${VOID_VERSION:-}"
 [[ "${voidVersion}" == "null" ]] && voidVersion=""
@@ -173,27 +181,21 @@ elif [[ "${OS_NAME}" == "windows" ]]; then
 else
   cd vscode || { echo "'vscode' dir not found"; exit 1; }
 
-  # CI : ne pas lancer deb/rpm sauf demande explicite (prepare-deb était aussi déclenché via APPIMAGE=oui + ||)
-  if [[ "${GITHUB_ACTIONS}" == "true" && "${SHOULD_BUILD_DEB}" != "yes" ]]; then
-    SHOULD_BUILD_DEB="no"
-    SHOULD_BUILD_RPM="no"
-  fi
-
-  if [[ "${SHOULD_BUILD_APPIMAGE}" != "no" && "${VSCODE_ARCH}" != "x64" ]]; then
+  if [[ "${SHOULD_BUILD_APPIMAGE}" == "yes" && "${VSCODE_ARCH}" != "x64" ]]; then
     SHOULD_BUILD_APPIMAGE="no"
   fi
 
-  if [[ "${SHOULD_BUILD_DEB}" != "no" ]]; then
+  if [[ "${SHOULD_BUILD_DEB}" == "yes" ]]; then
     npm run gulp "vscode-linux-${VSCODE_ARCH}-prepare-deb"
     npm run gulp "vscode-linux-${VSCODE_ARCH}-build-deb"
   fi
 
-  if [[ "${SHOULD_BUILD_RPM}" != "no" ]]; then
+  if [[ "${SHOULD_BUILD_RPM}" == "yes" ]]; then
     npm run gulp "vscode-linux-${VSCODE_ARCH}-prepare-rpm"
     npm run gulp "vscode-linux-${VSCODE_ARCH}-build-rpm"
   fi
 
-  if [[ "${SHOULD_BUILD_APPIMAGE}" != "no" ]]; then
+  if [[ "${SHOULD_BUILD_APPIMAGE}" == "yes" ]]; then
     . ../build/linux/appimage/build.sh
   fi
 
@@ -214,17 +216,17 @@ else
     cd ..
   fi
 
-  if [[ "${SHOULD_BUILD_DEB}" != "no" ]]; then
+  if [[ "${SHOULD_BUILD_DEB}" == "yes" ]]; then
     echo "Moving DEB"
     mv vscode/.build/linux/deb/*/deb/*.deb assets/
   fi
 
-  if [[ "${SHOULD_BUILD_RPM}" != "no" ]]; then
+  if [[ "${SHOULD_BUILD_RPM}" == "yes" ]]; then
     echo "Moving RPM"
     mv vscode/.build/linux/rpm/*/*.rpm assets/
   fi
 
-  if [[ "${SHOULD_BUILD_APPIMAGE}" != "no" ]]; then
+  if [[ "${SHOULD_BUILD_APPIMAGE}" == "yes" ]]; then
     echo "Moving AppImage"
     mv build/linux/appimage/out/*.AppImage* assets/
 
