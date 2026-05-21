@@ -173,11 +173,17 @@ elif [[ "${OS_NAME}" == "windows" ]]; then
 else
   cd vscode || { echo "'vscode' dir not found"; exit 1; }
 
+  # CI : ne pas lancer deb/rpm sauf demande explicite (prepare-deb était aussi déclenché via APPIMAGE=oui + ||)
+  if [[ "${GITHUB_ACTIONS}" == "true" && "${SHOULD_BUILD_DEB}" != "yes" ]]; then
+    SHOULD_BUILD_DEB="no"
+    SHOULD_BUILD_RPM="no"
+  fi
+
   if [[ "${SHOULD_BUILD_APPIMAGE}" != "no" && "${VSCODE_ARCH}" != "x64" ]]; then
     SHOULD_BUILD_APPIMAGE="no"
   fi
 
-  if [[ "${SHOULD_BUILD_DEB}" != "no" || "${SHOULD_BUILD_APPIMAGE}" != "no" ]]; then
+  if [[ "${SHOULD_BUILD_DEB}" != "no" ]]; then
     npm run gulp "vscode-linux-${VSCODE_ARCH}-prepare-deb"
     npm run gulp "vscode-linux-${VSCODE_ARCH}-build-deb"
   fi

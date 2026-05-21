@@ -126,9 +126,10 @@ jobs:
         env:
           SHOULD_BUILD_REH: 'no'
           SHOULD_BUILD_REH_WEB: 'no'
-          # .deb/.rpm : dpkg-shlibdeps échoue sur sharp dans l’arbre VSCode-linux-* (CI = tar.gz)
+          # .deb/.rpm : dpkg-shlibdeps échoue sur sharp (CI = tar.gz uniquement)
           SHOULD_BUILD_DEB: 'no'
           SHOULD_BUILD_RPM: 'no'
+          SHOULD_BUILD_APPIMAGE: 'no'
         run: ./prepare_assets.sh
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
 
