@@ -4,6 +4,10 @@
 
 set -e
 
+# Racine void-builder (ne pas recalculer après un cd vscode/ : dirname de ./ci_repo.sh = ".")
+VB_REPO_ROOT="${VOID_BUILDER_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
+export VOID_BUILDER_ROOT="${VB_REPO_ROOT}"
+
 ci_repo_pr() {
   ci_git_safe_directory
 
@@ -80,9 +84,8 @@ ci_repo_void() {
   fi
 
   if [[ -n "${VOID_VERSION:-}" ]]; then
-    REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     # shellcheck source=scripts/lib/ci_lib.sh
-    source "${REPO_ROOT}/scripts/lib/ci_lib.sh"
+    source "${VB_REPO_ROOT}/scripts/lib/ci_lib.sh"
     ci_apply_void_version
   fi
 
