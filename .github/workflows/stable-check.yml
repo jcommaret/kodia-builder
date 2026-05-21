@@ -60,6 +60,14 @@ jobs:
       - name: Check PR or cron
         run: ./check_cron_or_pr.sh
 
+      - name: Increment version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./bump_version.sh
+        if: >-
+          env.INCREMENT_VERSION == 'yes' &&
+          (github.event_name != 'workflow_dispatch' || github.event.inputs.increment_version != false)
+
       - name: Check existing VSCodium tags/releases
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

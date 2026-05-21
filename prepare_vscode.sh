@@ -195,6 +195,10 @@ fi
 jsonTmp=$( jq -s '.[0] * .[1]' product.json ../product.json )
 echo "${jsonTmp}" > product.json && unset jsonTmp
 
+if [[ -n "${VOID_VERSION}" ]]; then
+  setpath "product" "voidVersion" "${VOID_VERSION}"
+fi
+
 cat product.json
 
 # package.json

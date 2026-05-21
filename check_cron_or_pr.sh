@@ -21,7 +21,12 @@ elif [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
 else
 	echo "It's a Cron"
 
-	export SHOULD_DEPLOY="yes"
+	export SHOULD_BUILD="yes"
+  export SHOULD_DEPLOY="yes"
+fi
+
+if [[ "${SHOULD_DEPLOY}" == "yes" ]]; then
+  export INCREMENT_VERSION="yes"
 fi
 
 if [[ "${GITHUB_ENV}" ]]; then
@@ -29,4 +34,5 @@ if [[ "${GITHUB_ENV}" ]]; then
   echo "SHOULD_BUILD=${SHOULD_BUILD}" >> "${GITHUB_ENV}"
   echo "SHOULD_DEPLOY=${SHOULD_DEPLOY}" >> "${GITHUB_ENV}"
   echo "VSCODE_QUALITY=${VSCODE_QUALITY}" >> "${GITHUB_ENV}"
+  echo "INCREMENT_VERSION=${INCREMENT_VERSION}" >> "${GITHUB_ENV}"
 fi

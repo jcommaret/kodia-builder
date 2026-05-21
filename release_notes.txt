@@ -1,31 +1,27 @@
 # Void VOID_VERSION
 
-See https://voideditor.com for Void's official download page.
+Version **RELEASE_VERSION** (base VS Code **MS_TAG**).
 
-For maintainers: [`void-builder/`](https://github.com/voideditor/void-builder#readme)
-
-# Binaries
+Téléchargements : [releases](https://github.com/ASSETS_REPOSITORY/releases/tag/RELEASE_VERSION).
 
 ## Windows
-- <a href="https://github.com/voideditor/binaries/releases/download/RELEASE_VERSION/VoidSetup-x64-RELEASE_VERSION.exe">Windows (x64)</a>
-- <a href="https://github.com/voideditor/binaries/releases/download/RELEASE_VERSION/VoidSetup-arm64-RELEASE_VERSION.exe">Windows (ARM)</a>
+- [VoidSetup (x64)](https://github.com/ASSETS_REPOSITORY/releases/download/RELEASE_VERSION/VoidSetup-x64-RELEASE_VERSION.exe)
+- [VoidSetup (arm64)](https://github.com/ASSETS_REPOSITORY/releases/download/RELEASE_VERSION/VoidSetup-arm64-RELEASE_VERSION.exe)
 
-## Mac
-- <a href="https://github.com/voideditor/binaries/releases/download/RELEASE_VERSION/Void.x64.RELEASE_VERSION.dmg">Mac (x64 / Intel)</a>
-- <a href="https://github.com/voideditor/binaries/releases/download/RELEASE_VERSION/Void.arm64.RELEASE_VERSION.dmg">Mac (ARM / M Chip)</a>
+## macOS
+- [DMG Intel (x64)](https://github.com/ASSETS_REPOSITORY/releases/download/RELEASE_VERSION/Void-VOID_VERSION-x64.dmg)
+- [DMG Apple Silicon (arm64)](https://github.com/ASSETS_REPOSITORY/releases/download/RELEASE_VERSION/Void-VOID_VERSION-arm64.dmg)
 
 ## Linux
-- <a href="https://github.com/voideditor/binaries/releases/download/RELEASE_VERSION/Void-linux-x64-RELEASE_VERSION.tar.gz">Linux .tar.gz (x64)</a>
-- <a href="https://github.com/voideditor/binaries/releases/download/RELEASE_VERSION/Void-linux-arm64-RELEASE_VERSION.tar.gz">Linux .tar.gz (arm64)</a>
-- <a href="https://github.com/voideditor/binaries/releases/download/RELEASE_VERSION/Void-linux-armhf-RELEASE_VERSION.tar.gz">Linux .tar.gz (armhf)</a>
-- <a href="https://github.com/voideditor/binaries/releases/download/RELEASE_VERSION/Void-linux-loong64-RELEASE_VERSION.tar.gz">Linux .tar.gz (loong64)</a>
-- <a href="https://github.com/voideditor/binaries/releases/download/RELEASE_VERSION/Void-linux-ppc64le-RELEASE_VERSION.tar.gz">Linux .tar.gz (ppc64le)</a>
-- <a href="https://github.com/voideditor/binaries/releases/download/RELEASE_VERSION/Void-linux-riscv64-RELEASE_VERSION.tar.gz">Linux .tar.gz (riscv64)</a>
-- <a href="https://github.com/voideditor/binaries/releases/download/RELEASE_VERSION/void_RELEASE_VERSION_arm64.deb">Linux .deb (ARM)</a>
-- <a href="https://github.com/voideditor/binaries/releases/download/RELEASE_VERSION/void_RELEASE_VERSION_amd64.deb">Linux .deb (AMD)</a>
+- [tar.gz (x64)](https://github.com/ASSETS_REPOSITORY/releases/download/RELEASE_VERSION/Void-linux-x64-RELEASE_VERSION.tar.gz)
+- [tar.gz (arm64)](https://github.com/ASSETS_REPOSITORY/releases/download/RELEASE_VERSION/Void-linux-arm64-RELEASE_VERSION.tar.gz)
 
+## Remote extension host (Linux)
+- [reh (x64)](https://github.com/ASSETS_REPOSITORY/releases/download/RELEASE_VERSION/void-reh-linux-x64-RELEASE_VERSION.tar.gz)
+- [reh (arm64)](https://github.com/ASSETS_REPOSITORY/releases/download/RELEASE_VERSION/void-reh-linux-arm64-RELEASE_VERSION.tar.gz)
 
-## Status
-If any downloads give a 404, this version is likely very new. Try the previous version until the workflows complete!
+## Statut
 
-[![stable](https://github.com/voideditor/void-builder/actions/workflows/stable.yml/badge.svg)](https://github.com/voideditor/void-builder/actions/workflows/stable.yml)
+Les liens peuvent renvoyer une 404 tant que tous les jobs CI (macOS, Linux, Windows, REH) ne sont pas terminés.
+
+[![stable](https://github.com/VOID_BUILDER_REPO/actions/workflows/stable.yml/badge.svg)](https://github.com/VOID_BUILDER_REPO/actions/workflows/stable.yml)
