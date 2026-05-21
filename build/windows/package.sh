@@ -32,7 +32,7 @@ done
 
 node build/azure-pipelines/distro/mixin-npm
 
-. ../build/windows/rtf/make.sh
+. "${VOID_BUILDER_ROOT}/build/windows/rtf/make.sh"
 
 npm run gulp "vscode-win32-${VSCODE_ARCH}-min-ci"
 

@@ -235,10 +235,12 @@ else
   echo "No changes"
 fi
 
-# --- Sauvegarder la version dans un fichier VERSION pour une utilisation future ---
-echo "${RELEASE_VERSION}" > VERSION
-git add VERSION
-if ! git commit -m "Update VERSION file to ${RELEASE_VERSION}" --quiet; then
-  echo "No changes to VERSION file or already up to date."
+# Fichier VERSION : une seule écriture (job macOS) pour éviter les conflits git avec Windows/Linux
+if [[ "${WRITE_VERSION_FILE}" == "yes" ]]; then
+  echo "${RELEASE_VERSION}" > VERSION
+  git add VERSION
+  if ! git commit -m "Update VERSION file to ${RELEASE_VERSION}" --quiet; then
+    echo "No changes to VERSION file or already up to date."
+  fi
+  git push origin master --quiet
 fi
-git push origin master --quiet

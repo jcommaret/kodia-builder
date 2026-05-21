@@ -80,10 +80,10 @@ jobs:
         if: env.DISABLED != 'yes'
 
       - name: Platform CI setup
+        shell: bash
         env:
           CHECK_REH: 'no'
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SKIP_GH_INSTALL: ${{ env.SHOULD_DEPLOY != 'yes' && 'yes' || '' }}
         run: ./ci_platform.sh
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
 
@@ -112,6 +112,7 @@ jobs:
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
 
       - name: Prepare assets
+        shell: bash
         env:
           SHOULD_BUILD_REH: 'no'
           SHOULD_BUILD_REH_WEB: 'no'
@@ -125,6 +126,17 @@ jobs:
           GITHUB_USERNAME: ${{ github.repository_owner }}
         run: ./release.sh
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
+
+      - name: Update versions repo (Windows)
+        shell: bash
+        env:
+          FORCE_UPDATE: ${{ github.event.inputs.force_version }}
+          GITHUB_TOKEN: ${{ secrets.STRONGER_GITHUB_TOKEN }}
+          GITHUB_USERNAME: ${{ github.repository_owner }}
+        run: |
+          git config --global url."https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com".insteadOf "https://github.com"
+          ./update_version.sh
+        if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes' && env.SHOULD_DEPLOY == 'yes' && matrix.vscode_arch == 'x64'
 
       - name: Upload assets
         uses: actions/upload-artifact@v4

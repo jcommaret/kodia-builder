@@ -250,18 +250,33 @@ if [[ "${SHOULD_BUILD_REH_WEB}" != "no" ]]; then
   cd ..
 fi
 
-if [[ "${OS_NAME}" != "windows" ]]; then
-  if ! command -v checksum &>/dev/null; then
-    npm install -g checksum
-  fi
-  (
-    cd assets
-    for FILE in *; do
-      if [[ -f "${FILE}" ]]; then
-        echo "Calculating checksum for ${FILE}"
-        checksum -a sha256 "${FILE}" > "${FILE}.sha256"
-        checksum "${FILE}" > "${FILE}.sha1"
-      fi
-    done
-  )
+if ! command -v checksum &>/dev/null; then
+  npm install -g checksum 2>/dev/null || true
 fi
+
+write_asset_checksums() {
+  local file="${1}"
+  if [[ ! -f "${file}" ]]; then
+    return 0
+  fi
+  echo "Calculating checksum for ${file}"
+  if command -v checksum &>/dev/null; then
+    checksum -a sha256 "${file}" > "${file}.sha256"
+    checksum "${file}" > "${file}.sha1"
+  elif [[ "${OS_NAME}" == "windows" ]] && command -v certutil &>/dev/null; then
+    certutil -hashfile "${file}" SHA256 | awk 'NR==2 {print $1}' > "${file}.sha256"
+    certutil -hashfile "${file}" SHA1 | awk 'NR==2 {print $1}' > "${file}.sha1"
+  else
+    echo "No checksum tool available for ${file}" >&2
+    return 1
+  fi
+}
+
+(
+  cd assets
+  for FILE in *; do
+    if [[ -f "${FILE}" ]]; then
+      write_asset_checksums "${FILE}"
+    fi
+  done
+)

@@ -137,11 +137,12 @@ jobs:
         run: ./release.sh
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
 
-      - name: Update versions repo
+      - name: Update versions repo (macOS)
         env:
           FORCE_UPDATE: ${{ github.event.inputs.force_version }}
           GITHUB_TOKEN: ${{ secrets.STRONGER_GITHUB_TOKEN }}
           GITHUB_USERNAME: ${{ github.repository_owner }}
+          WRITE_VERSION_FILE: 'yes'
         run: |
           git config --global url."https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com".insteadOf "https://github.com"
           ./update_version.sh
