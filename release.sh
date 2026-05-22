@@ -56,8 +56,9 @@ release_ensure_exists() {
 release_upload_assets() {
   set -x
   if ! setup_github_token; then
-    echo "Will not release because no GITHUB_TOKEN defined"
-    exit 0
+    echo "ERROR: No GITHUB_TOKEN / STRONGER_GITHUB_TOKEN — cannot upload to ${ASSETS_REPOSITORY}" >&2
+    echo "Configure secret STRONGER_GITHUB_TOKEN (PAT avec scope repo sur ${ASSETS_REPOSITORY})." >&2
+    exit 1
   fi
 
   if [[ -z "${RELEASE_VERSION}" ]]; then
@@ -65,35 +66,53 @@ release_upload_assets() {
     exit 1
   fi
 
+  if [[ ! -d assets ]] || [[ -z "$(find assets -maxdepth 1 -type f ! -name '*.sha1' ! -name '*.sha256' 2>/dev/null | head -1)" ]]; then
+    echo "ERROR: assets/ is empty or missing — nothing to upload" >&2
+    ls -la assets 2>/dev/null || true
+    exit 1
+  fi
+
   echo "Uploading assets to ${ASSETS_REPOSITORY} release tag: ${RELEASE_VERSION}"
+  echo "assets/:"
+  ls -la assets/
 
   release_ensure_exists || exit 1
 
   REPOSITORY_OWNER="${ASSETS_REPOSITORY/\/*/}"
   REPOSITORY_NAME="${ASSETS_REPOSITORY/*\//}"
 
-  npm install -g github-release-cli
+  if command -v github-release &>/dev/null; then
+    :
+  else
+    npm install -g github-release-cli || echo "github-release-cli install failed; retries may be limited" >&2
+  fi
 
   cd assets
 
   set +e
+  local uploaded=0
 
   for FILE in *; do
     if [[ -f "${FILE}" ]] && [[ "${FILE}" != *.sha1 ]] && [[ "${FILE}" != *.sha256 ]]; then
       echo "::group::Uploading '${FILE}' at $( date "+%T" )"
-      gh release upload --repo "${ASSETS_REPOSITORY}" "${RELEASE_VERSION}" "${FILE}" "${FILE}.sha1" "${FILE}.sha256"
+      local -a UPLOAD_FILES=("${FILE}")
+      [[ -f "${FILE}.sha1" ]] && UPLOAD_FILES+=("${FILE}.sha1")
+      [[ -f "${FILE}.sha256" ]] && UPLOAD_FILES+=("${FILE}.sha256")
+      gh release upload --repo "${ASSETS_REPOSITORY}" "${RELEASE_VERSION}" "${UPLOAD_FILES[@]}"
 
       EXIT_STATUS=$?
       echo "exit: ${EXIT_STATUS}"
 
       if (( EXIT_STATUS )); then
         for (( i=0; i<10; i++ )); do
-          github-release delete --owner "${REPOSITORY_OWNER}" --repo "${REPOSITORY_NAME}" --tag "${RELEASE_VERSION}" "${FILE}" "${FILE}.sha1" "${FILE}.sha256"
+          if command -v github-release &>/dev/null; then
+            github-release delete --owner "${REPOSITORY_OWNER}" --repo "${REPOSITORY_NAME}" --tag "${RELEASE_VERSION}" "${UPLOAD_FILES[@]}" 2>/dev/null || true
+          fi
 
           sleep $(( 15 * (i + 1)))
 
           echo "RE-Uploading '${FILE}' at $( date "+%T" )"
-          gh release upload --repo "${ASSETS_REPOSITORY}" "${RELEASE_VERSION}" "${FILE}" "${FILE}.sha1" "${FILE}.sha256"
+          gh release upload --repo "${ASSETS_REPOSITORY}" "${RELEASE_VERSION}" "${UPLOAD_FILES[@]}"
 
           EXIT_STATUS=$?
           echo "exit: ${EXIT_STATUS}"
@@ -106,16 +125,26 @@ release_upload_assets() {
 
         if (( EXIT_STATUS )); then
           echo "'${FILE}' hasn't been uploaded!"
-          github-release delete --owner "${REPOSITORY_OWNER}" --repo "${REPOSITORY_NAME}" --tag "${RELEASE_VERSION}" "${FILE}" "${FILE}.sha1" "${FILE}.sha256"
+          if command -v github-release &>/dev/null; then
+            github-release delete --owner "${REPOSITORY_OWNER}" --repo "${REPOSITORY_NAME}" --tag "${RELEASE_VERSION}" "${UPLOAD_FILES[@]}" 2>/dev/null || true
+          fi
           exit 1
         fi
       fi
 
+      uploaded=$((uploaded + 1))
       echo "::endgroup::"
     fi
   done
 
   cd ..
+
+  if (( uploaded == 0 )); then
+    echo "ERROR: No release assets uploaded" >&2
+    exit 1
+  fi
+
+  echo "Uploaded ${uploaded} asset(s) to ${ASSETS_REPOSITORY}@${RELEASE_VERSION}"
 }
 
 case "${1:-}" in

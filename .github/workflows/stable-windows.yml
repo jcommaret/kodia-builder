@@ -42,6 +42,8 @@ env:
 jobs:
   build_windows:
     runs-on: windows-2022
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
@@ -119,10 +121,16 @@ jobs:
         run: ./prepare_assets.sh
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
 
+      - name: List assets before release
+        shell: bash
+        run: ls -la assets/ || echo "assets/ missing"
+        if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
+
       - name: Upload to GitHub release
+        shell: bash
         env:
           STRONGER_GITHUB_TOKEN: ${{ secrets.STRONGER_GITHUB_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.STRONGER_GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.STRONGER_GITHUB_TOKEN != '' && secrets.STRONGER_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           GITHUB_USERNAME: ${{ github.repository_owner }}
         run: ./release.sh
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
