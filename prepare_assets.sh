@@ -107,12 +107,17 @@ if [[ "${OS_NAME}" == "osx" ]]; then
     echo "Building and moving DMG"
     # npx depuis void-builder échoue après popd (ENOENT package.json) — install isolée
     CREATE_DMG_PREFIX="${RUNNER_TEMP:-${TMPDIR:-/tmp}}/vb-create-dmg"
+    CREATE_DMG_BIN="${CREATE_DMG_PREFIX}/node_modules/.bin/create-dmg"
     mkdir -p "${CREATE_DMG_PREFIX}"
-    if [[ ! -x "${CREATE_DMG_PREFIX}/bin/create-dmg" ]]; then
+    if [[ ! -x "${CREATE_DMG_BIN}" ]]; then
       npm install --prefix="${CREATE_DMG_PREFIX}" --no-save create-dmg@8.1.0
     fi
+    if [[ ! -x "${CREATE_DMG_BIN}" ]]; then
+      echo "create-dmg introuvable après install (attendu: ${CREATE_DMG_BIN})" >&2
+      exit 1
+    fi
     pushd "VSCode-darwin-${VSCODE_ARCH}"
-    "${CREATE_DMG_PREFIX}/bin/create-dmg" ./*.app .
+    "${CREATE_DMG_BIN}" ./*.app .
     # Aligné avec update_version.sh : ${APP_NAME}-<voidVersion>-<arch>.dmg
     DMG_FILE=$(ls *.dmg)
     mv "${DMG_FILE}" "../assets/${APP_NAME}-${voidVersion}-${VSCODE_ARCH}.dmg"
