@@ -52,9 +52,23 @@ ci_version_max() {
   printf '%s\n%s\n' "$1" "$2" | sort -V | tail -1
 }
 
-ci_bump_minor() {
+# Base VS Code semver x.y.z (sans .0 Inno, sans -insider, sans zéros de trop type 1.99.030).
+ci_normalize_ms_tag() {
+  local v="${1%%-*}"
+
+  if [[ "${v}" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)\.[0-9]+$ ]]; then
+    echo "${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.$((10#${BASH_REMATCH[3]}))"
+  elif [[ "${v}" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+    echo "${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.$((10#${BASH_REMATCH[3]}))"
+  else
+    echo "${v}"
+  fi
+}
+
+# Incrémente uniquement le patch (ex. 1.5.3 → 1.5.4).
+ci_bump_patch() {
   local version="${1}"
-  local major minor
+  local major minor patch
 
   if [[ ! "${version}" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
     echo "Invalid semver for bump: ${version}" >&2
@@ -63,8 +77,9 @@ ci_bump_minor() {
 
   major="${BASH_REMATCH[1]}"
   minor="${BASH_REMATCH[2]}"
-  minor=$((minor + 1))
-  echo "${major}.${minor}.0"
+  patch="${BASH_REMATCH[3]}"
+  patch=$((patch + 1))
+  echo "${major}.${minor}.${patch}"
 }
 
 ci_extract_void_version_from_tag() {
@@ -164,7 +179,7 @@ ci_bump_version() {
     echo "No prior void release found on ${ASSETS_REPOSITORY}; bumping from ${base_version}"
   fi
 
-  VOID_VERSION=$(ci_bump_minor "${base_version}")
+  VOID_VERSION=$(ci_bump_patch "${base_version}")
 
   if [[ -n "${MS_TAG}" ]]; then
     RELEASE_VERSION="${MS_TAG}-${VOID_VERSION}"

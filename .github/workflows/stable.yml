@@ -15,7 +15,7 @@ on:
         description: Force update version
       increment_version:
         type: boolean
-        description: Increment voidVersion (minor, patch 0) before release
+        description: Increment voidVersion (patch only) before release
         default: true
   repository_dispatch:
     types: [stable]

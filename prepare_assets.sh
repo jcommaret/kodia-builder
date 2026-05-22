@@ -130,10 +130,10 @@ elif [[ "${OS_NAME}" == "windows" ]]; then
   cd vscode || { echo "'vscode' dir not found"; exit 1; }
 
   # Inno Setup : VersionInfoVersion = package.json version (x.y.z.w uniquement)
-  win_pkg_ver="${MS_TAG:-${RELEASE_VERSION%%-*}}"
-  win_pkg_ver="${win_pkg_ver%%-*}"
-  if [[ "${win_pkg_ver}" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
-    win_pkg_ver="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.$((10#${BASH_REMATCH[3]})).0"
+  # shellcheck source=scripts/lib/ci_lib.sh
+  source "${VOID_BUILDER_ROOT:-${GITHUB_WORKSPACE:-.}}/scripts/lib/ci_lib.sh"
+  win_pkg_ver="$(ci_normalize_ms_tag "${MS_TAG:-${RELEASE_VERSION%%-*}}")"
+  win_pkg_ver="${win_pkg_ver}.0"
     tmp=$(mktemp)
     jq --arg v "${win_pkg_ver}" '.version = $v' package.json > "${tmp}"
     mv "${tmp}" package.json

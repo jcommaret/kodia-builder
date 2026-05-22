@@ -62,8 +62,10 @@ ci_repo_void() {
   fi
 
   MS_VERSION=$( jq -r '.version' "package.json" )
-  MS_VERSION="${MS_VERSION%%-*}"
-  MS_TAG="${MS_VERSION}"
+  # shellcheck source=scripts/lib/ci_lib.sh
+  source "${VB_REPO_ROOT}/scripts/lib/ci_lib.sh"
+  MS_TAG=$(ci_normalize_ms_tag "${MS_VERSION}")
+  MS_VERSION="${MS_TAG}"
   MS_COMMIT=$( git rev-parse HEAD )
   local pin_versions=false
   if [[ -n "${RELEASE_VERSION:-}" && -n "${VOID_VERSION:-}" ]]; then
@@ -84,8 +86,6 @@ ci_repo_void() {
   fi
 
   if [[ -n "${VOID_VERSION:-}" ]]; then
-    # shellcheck source=scripts/lib/ci_lib.sh
-    source "${VB_REPO_ROOT}/scripts/lib/ci_lib.sh"
     ci_apply_void_version
   fi
 
