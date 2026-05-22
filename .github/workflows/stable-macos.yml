@@ -116,6 +116,7 @@ jobs:
 
       - name: Prepare assets
         env:
+          OS_NAME: osx
           SHOULD_BUILD_REH: 'no'
           SHOULD_BUILD_REH_WEB: 'no'
           SHOULD_BUILD_ZIP: 'no'

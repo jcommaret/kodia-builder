@@ -65,6 +65,36 @@ ci_normalize_ms_tag() {
   fi
 }
 
+# Inno Setup : VersionInfoVersion = x.y.z.w obligatoire. Contournement : patch package.json
+# uniquement le temps des tâches gulp Inno, puis restauration (voir ci_restore_package_json_version).
+ci_win_inno_version() {
+  local base
+  base="$(ci_normalize_ms_tag "${1}")"
+  echo "${base}.0"
+}
+
+ci_apply_win_inno_package_version() {
+  local ver="${1:-$(ci_win_inno_version "${MS_TAG:-${RELEASE_VERSION%%-*}}")}"
+  local tmp
+
+  if [[ ! -f package.json ]]; then
+    echo "ci_apply_win_inno_package_version: package.json not found" >&2
+    return 1
+  fi
+
+  tmp=$(mktemp)
+  jq --arg v "${ver}" '.version = $v' package.json > "${tmp}"
+  mv "${tmp}" package.json
+  echo "Windows Inno package.json version=${ver} (app reste x.y.z après restauration)"
+}
+
+ci_restore_package_json_version() {
+  if [[ -f package.json.bak ]]; then
+    cp package.json.bak package.json
+    echo "Restored package.json version=$(jq -r '.version // empty' package.json)"
+  fi
+}
+
 # Incrémente uniquement le patch (ex. 1.5.3 → 1.5.4).
 ci_bump_patch() {
   local version="${1}"

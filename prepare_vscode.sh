@@ -212,10 +212,9 @@ cat product.json
 # package.json
 cp package.json{,.bak}
 
-# Inno Setup (VersionInfoVersion) : x.y.z.0 — MS_TAG reste x.y.z (voir ci_normalize_ms_tag).
+# package.json : x.y.z (app macOS/Linux, affichage). Inno x.y.z.0 → prepare_assets.sh (Windows uniquement).
 package_version="$(ci_normalize_ms_tag "${MS_TAG:-${RELEASE_VERSION%-insider}}")"
-package_version="${package_version}.0"
-echo "package.json version (Inno): ${package_version} (MS_TAG=${MS_TAG:-?} RELEASE_VERSION=${RELEASE_VERSION})"
+echo "package.json version: ${package_version} (MS_TAG=${MS_TAG:-?} RELEASE_VERSION=${RELEASE_VERSION})"
 setpath "package" "version" "${package_version}"
 
 replace 's|Microsoft Corporation|Void|' package.json

@@ -105,8 +105,14 @@ if [[ "${OS_NAME}" == "osx" ]]; then
 
   if [[ "${SHOULD_BUILD_DMG}" != "no" ]]; then
     echo "Building and moving DMG"
+    # npx depuis void-builder échoue après popd (ENOENT package.json) — install isolée
+    CREATE_DMG_PREFIX="${RUNNER_TEMP:-${TMPDIR:-/tmp}}/vb-create-dmg"
+    mkdir -p "${CREATE_DMG_PREFIX}"
+    if [[ ! -x "${CREATE_DMG_PREFIX}/bin/create-dmg" ]]; then
+      npm install --prefix="${CREATE_DMG_PREFIX}" --no-save create-dmg@8.1.0
+    fi
     pushd "VSCode-darwin-${VSCODE_ARCH}"
-    npx create-dmg ./*.app .
+    "${CREATE_DMG_PREFIX}/bin/create-dmg" ./*.app .
     # Aligné avec update_version.sh : ${APP_NAME}-<voidVersion>-<arch>.dmg
     DMG_FILE=$(ls *.dmg)
     mv "${DMG_FILE}" "../assets/${APP_NAME}-${voidVersion}-${VSCODE_ARCH}.dmg"
@@ -129,16 +135,10 @@ if [[ "${OS_NAME}" == "osx" ]]; then
 elif [[ "${OS_NAME}" == "windows" ]]; then
   cd vscode || { echo "'vscode' dir not found"; exit 1; }
 
-  # Inno Setup : VersionInfoVersion = package.json version (x.y.z.w uniquement)
+  # Contournement Inno (x.y.z.w) : patch temporaire de package.json, puis restauration x.y.z
   # shellcheck source=scripts/lib/ci_lib.sh
   source "${VOID_BUILDER_ROOT:-${GITHUB_WORKSPACE:-.}}/scripts/lib/ci_lib.sh"
-  win_pkg_ver="$(ci_normalize_ms_tag "${MS_TAG:-${RELEASE_VERSION%%-*}}")"
-  win_pkg_ver="${win_pkg_ver}.0"
-    tmp=$(mktemp)
-    jq --arg v "${win_pkg_ver}" '.version = $v' package.json > "${tmp}"
-    mv "${tmp}" package.json
-    echo "Windows Inno package.json version=${win_pkg_ver}"
-  fi
+  ci_apply_win_inno_package_version
 
   npm run gulp "vscode-win32-${VSCODE_ARCH}-inno-updater"
 
@@ -153,6 +153,8 @@ elif [[ "${OS_NAME}" == "windows" ]]; then
   if [[ "${SHOULD_BUILD_EXE_USR}" != "no" ]]; then
     npm run gulp "vscode-win32-${VSCODE_ARCH}-user-setup"
   fi
+
+  ci_restore_package_json_version
 
   if [[ "${VSCODE_ARCH}" == "ia32" || "${VSCODE_ARCH}" == "x64" ]]; then
     if [[ "${SHOULD_BUILD_MSI}" != "no" ]]; then
@@ -261,11 +263,6 @@ if [[ "${SHOULD_BUILD_REH_WEB}" != "no" ]]; then
   cd ..
 fi
 
-if [[ "${OS_NAME}" != "osx" ]] && ! command -v checksum &>/dev/null; then
-  # Évite npm à la racine void-builder (pas de package.json)
-  ( cd /tmp && npm install -g checksum ) 2>/dev/null || true
-fi
-
 write_asset_checksums() {
   local file="${1}"
   if [[ ! -f "${file}" ]]; then
@@ -284,6 +281,9 @@ write_asset_checksums() {
   elif command -v shasum &>/dev/null; then
     shasum -a 256 "${file}" | awk '{print $1}' > "${file}.sha256"
     shasum -a 1 "${file}" | awk '{print $1}' > "${file}.sha1"
+  elif command -v sha256sum &>/dev/null; then
+    sha256sum "${file}" | awk '{print $1}' > "${file}.sha256"
+    sha1sum "${file}" | awk '{print $1}' > "${file}.sha1"
   else
     echo "No checksum tool available for ${file}" >&2
     return 1
