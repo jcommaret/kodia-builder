@@ -40,6 +40,11 @@ env:
   VERSIONS_REPOSITORY: jcommaret/void
   VSCODE_QUALITY: stable
 
+# Requis pour les workflows réutilisables qui publient sur la release (gh release upload).
+permissions:
+  contents: write
+  actions: write
+
 jobs:
   check:
     uses: ./.github/workflows/stable-check.yml

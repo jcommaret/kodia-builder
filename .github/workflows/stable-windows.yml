@@ -42,8 +42,6 @@ env:
 jobs:
   build_windows:
     runs-on: windows-2022
-    permissions:
-      contents: write
     strategy:
       fail-fast: false
       matrix:
