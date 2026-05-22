@@ -72,8 +72,10 @@ if [[ ! -d "${REPOSITORY_NAME}" ]]; then
   exit 1
 fi
 
-# Stocker le chemin absolu du dépôt cloné pour y revenir plus tard
-REPO_ABSOLUTE_PATH=$(pwd)/"${REPOSITORY_NAME}"
+# Racine void-builder (assets/) vs clone du dépôt versions (stable/…/latest.json)
+BUILDER_ROOT="${VOID_BUILDER_ROOT:-$(pwd)}"
+ASSETS_DIR="${BUILDER_ROOT}/assets"
+REPO_ABSOLUTE_PATH="${BUILDER_ROOT}/${REPOSITORY_NAME}"
 cd "${REPOSITORY_NAME}" || { echo "'${REPOSITORY_NAME}' dir not found"; exit 1; }
 git config user.email "$( echo "${GITHUB_USERNAME}" | awk '{print tolower($0)}' )-ci@not-real.com"
 git config user.name "${GITHUB_USERNAME} CI"
@@ -94,13 +96,24 @@ generateJson() {
   productVersion="$( transformVersion "${RELEASE_VERSION}" )"
   timestamp=$( node -e 'console.log(Date.now())' )
 
-  if [[ ! -f "../assets/${ASSET_NAME}" ]]; then
-    echo "Downloading asset '${ASSET_NAME}'"
-    gh release download --repo "${ASSETS_REPOSITORY}" "${RELEASE_VERSION}" --dir "../assets" --pattern "${ASSET_NAME}*"
+  local asset_path="${ASSETS_DIR}/${ASSET_NAME}"
+
+  if [[ ! -f "${asset_path}" ]]; then
+    echo "Downloading asset '${ASSET_NAME}' from ${ASSETS_REPOSITORY}@${RELEASE_VERSION}"
+    mkdir -p "${ASSETS_DIR}"
+    set +e
+    gh release download --repo "${ASSETS_REPOSITORY}" "${RELEASE_VERSION}" \
+      --dir "${ASSETS_DIR}" --pattern "${ASSET_NAME}*"
+    set -e
   fi
 
-  sha1hash=$( awk '{ print $1 }' "../assets/${ASSET_NAME}.sha1" )
-  sha256hash=$( awk '{ print $1 }' "../assets/${ASSET_NAME}.sha256" )
+  if [[ ! -f "${asset_path}" ]]; then
+    echo "Asset '${ASSET_NAME}' introuvable dans ${ASSETS_DIR} ni sur la release — skip."
+    return 1
+  fi
+
+  sha1hash=$( awk '{ print $1 }' "${ASSETS_DIR}/${ASSET_NAME}.sha1" )
+  sha256hash=$( awk '{ print $1 }' "${ASSETS_DIR}/${ASSET_NAME}.sha256" )
 
   # check that nothing is blank (blank indicates something awry with build)
   for key in url name version productVersion sha1hash timestamp sha256hash; do
@@ -164,16 +177,17 @@ updateLatestVersion() {
 
   mkdir -p "${VERSION_PATH}"
 
-  generateJson
+  if ! generateJson; then
+    echo "Skipped ${VERSION_PATH} (asset manquant)"
+    return 0
+  fi
 
   echo "${JSON_DATA}" > "${VERSION_PATH}/latest.json"
 
   echo "${JSON_DATA}"
 }
 
-# Retour au dossier parent pour accéder aux assets
-cd ..
-
+# Rester dans le clone versions : VERSION_PATH = stable/… sous ce dépôt ; assets = ${BUILDER_ROOT}/assets
 if [[ "${OS_NAME}" == "osx" ]]; then
   ASSET_NAME="${APP_NAME}-${voidVersion}-${VSCODE_ARCH}.dmg"
   VERSION_PATH="${VSCODE_QUALITY}/darwin/${voidVersion}"
