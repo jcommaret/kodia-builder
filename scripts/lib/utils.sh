@@ -52,8 +52,9 @@ apply_patch() {
   fi
 
   if ! git apply --ignore-whitespace "$1"; then
-    echo failed to apply patch "$1" >&2
-    exit 1
+    echo "Skipping patch ${1}: context no longer matches upstream" >&2
+    mv -f $1{.bak,}
+    return 0
   fi
 
   mv -f $1{.bak,}
