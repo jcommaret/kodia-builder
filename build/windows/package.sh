@@ -40,16 +40,21 @@ if [[ "${VSCODE_ARCH}" == "arm64" ]] && [[ -f build/gulpfile.vscode.ts ]]; then
 const {readFileSync, writeFileSync} = require('fs');
 const f = 'build/gulpfile.vscode.ts';
 let c = readFileSync(f, 'utf8');
-const needle = "\t\tawait rcedit(path.join(cwd, dep), {";
-const patch = "\t\ttry {\n\t\t\tawait rcedit(path.join(cwd, dep), {";
-if (c.includes(needle) && !c.includes('rcedit skipped for')) {
-  c = c.replace(needle, patch);
-  c = c.replace(
-    /\t\t\}\);\n\t\}\);\n\n\t\tawait Promise\.all\(patchPromises\);/,
-    "\t\t});\n\t\t} catch (err) {\n\t\t\tconsole.warn(`[patchWin32Dependencies] rcedit skipped for ${dep}: ${err?.message ?? err}`);\n\t\t}\n\t});\n\n\t\tawait Promise.all(patchPromises);"
+if (!c.includes('rcedit skipped for')) {
+  const patched = c.replace(
+    /(\t+)await rcedit\(path\.join\(cwd, dep\), \{([\s\S]*?\n\1\}\);)/,
+    (_, indent, rest) => `${indent}try {
+${indent}\tawait rcedit(path.join(cwd, dep), {${rest}
+${indent}} catch (err) {
+${indent}\tconsole.warn(\`[patchWin32Dependencies] rcedit skipped for \${dep}: \${err?.message ?? err}\`);
+${indent}}`
   );
-  writeFileSync(f, c);
-  console.log('patched build/gulpfile.vscode.ts: rcedit failures are non-fatal on arm64');
+  if (patched !== c) {
+    writeFileSync(f, patched);
+    console.log('patched build/gulpfile.vscode.ts: rcedit failures are non-fatal on arm64');
+  } else {
+    console.warn('build/gulpfile.vscode.ts: rcedit patch pattern not found');
+  }
 }
 NODEEOF
 fi
