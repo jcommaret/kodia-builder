@@ -51,6 +51,9 @@ ci_repo_void() {
 
   git init -q
   git remote add origin "https://github.com/${VOID_REPO}.git"
+  # CI resilience: avoid hard-failing checkout on missing remote LFS objects.
+  # This keeps LFS pointers instead of downloading blobs during checkout.
+  export GIT_LFS_SKIP_SMUDGE=1
 
   if [[ -n "${VOID_COMMIT}" ]]; then
     echo "Using explicit commit ${VOID_COMMIT}"
