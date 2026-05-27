@@ -27,13 +27,14 @@ if [[ "${SHOULD_BUILD}" == "yes" ]]; then
   npm run gulp compile-extension-media
 
   # Install dependencies for bundled extensions that have their own package.json.
-  # The main npm ci does not always install git-hosted deps (e.g. open-remote-ssh).
+  # Postinstall (dirs.ts) covers most extensions, but macOS CI can skip some installs
+  # (install-state cache / parallel postinstall). compile-extensions-build also needs
+  # devDependencies for esbuild extensions (e.g. jake/grunt/gulp @types/node for tsgo).
   # Copilot is excluded: we don't want it in the build.
   for ext_pkg in extensions/*/package.json; do
     ext_dir="$(dirname "${ext_pkg}")"
     [[ "${ext_dir}" == "extensions/copilot" ]] && continue
-    # Only install if the extension declares runtime dependencies
-    if jq -e '.dependencies | length > 0' "${ext_pkg}" > /dev/null 2>&1; then
+    if jq -e '((.dependencies // {}) | length > 0) or ((.devDependencies // {}) | length > 0)' "${ext_pkg}" > /dev/null 2>&1; then
       echo "Installing deps for extension: ${ext_dir}"
       if [[ -f "${ext_dir}/package-lock.json" ]]; then
         (cd "${ext_dir}" && npm ci --no-audit --no-fund) || \

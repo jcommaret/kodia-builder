@@ -296,8 +296,13 @@ const {readFileSync, writeFileSync} = require('fs');
 const f = 'build/npm/dirs.ts';
 let c = readFileSync(f, 'utf8');
 c = c.replace(/^\s*'extensions\/copilot',?\n/m, '');
+for (const ext of ['extensions/open-remote-ssh', 'extensions/open-remote-wsl']) {
+  if (!c.includes(`'${ext}'`)) {
+    c = c.replace(/(\t'remote',)/, `\t'${ext}',\n$1`);
+  }
+}
 writeFileSync(f, c);
-console.log('patched build/npm/dirs.ts: removed extensions/copilot');
+console.log('patched build/npm/dirs.ts: removed extensions/copilot, ensured void remote extensions');
 NODEEOF
 fi
 
