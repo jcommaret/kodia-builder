@@ -25,6 +25,23 @@ if [[ "${SHOULD_BUILD}" == "yes" ]]; then
   npm run buildreact
   npm run gulp compile-build-without-mangling
   npm run gulp compile-extension-media
+
+  # Install dependencies for bundled extensions that have their own package.json.
+  # The main npm ci does not always install git-hosted deps (e.g. open-remote-ssh).
+  for ext_pkg in extensions/*/package.json; do
+    ext_dir="$(dirname "${ext_pkg}")"
+    # Only install if the extension declares runtime dependencies
+    if jq -e '.dependencies | length > 0' "${ext_pkg}" > /dev/null 2>&1; then
+      echo "Installing deps for extension: ${ext_dir}"
+      if [[ -f "${ext_dir}/package-lock.json" ]]; then
+        (cd "${ext_dir}" && npm ci --no-audit --no-fund) || \
+        (cd "${ext_dir}" && npm install --no-audit --no-fund)
+      else
+        (cd "${ext_dir}" && npm install --no-audit --no-fund)
+      fi
+    fi
+  done
+
   npm run gulp compile-extensions-build
   npm run gulp minify-vscode
 
