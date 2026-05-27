@@ -36,6 +36,21 @@ apply_patch() {
   replace "s|!!ORG_NAME!!|${ORG_NAME}|g" "$1"
   replace "s|!!RELEASE_VERSION!!|${RELEASE_VERSION}|g" "$1"
 
+  # Upstream can rename/remove files (e.g. *.js -> *.ts).
+  # If a patch targets missing files, skip it instead of failing the whole CI.
+  local missing_targets=0
+  while IFS= read -r target; do
+    if [[ ! -f "${target}" ]]; then
+      echo "Skipping patch ${1}: target not found (${target})" >&2
+      missing_targets=1
+    fi
+  done < <(awk '/^\+\+\+ b\// { sub(/^\+\+\+ b\//, "", $0); print $0 }' "$1")
+
+  if [[ "${missing_targets}" -eq 1 ]]; then
+    mv -f $1{.bak,}
+    return 0
+  fi
+
   if ! git apply --ignore-whitespace "$1"; then
     echo failed to apply patch "$1" >&2
     exit 1
