@@ -66,7 +66,7 @@ REPOSITORY_NAME="${VERSIONS_REPOSITORY/*\//}"
 
 # init versions repo for later commiting + pushing the json file to it
 echo "Cloning repository: ${VERSIONS_REPOSITORY}"
-git clone "https://${GH_HOST}/${VERSIONS_REPOSITORY}.git" "${REPOSITORY_NAME}" || { echo "Failed to clone repository ${VERSIONS_REPOSITORY}"; exit 1; }
+GIT_LFS_SKIP_SMUDGE=1 git clone "https://${GH_HOST}/${VERSIONS_REPOSITORY}.git" "${REPOSITORY_NAME}" || { echo "Failed to clone repository ${VERSIONS_REPOSITORY}"; exit 1; }
 if [[ ! -d "${REPOSITORY_NAME}" ]]; then
   echo "Error: Cloned directory '${REPOSITORY_NAME}' not found."
   exit 1
