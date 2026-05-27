@@ -27,7 +27,9 @@ ci_apply_void_version
 
 export VSCODE_PLATFORM='linux'
 export VSCODE_SKIP_NODE_VERSION_CHECK=1
-export VSCODE_SYSROOT_PREFIX='-glibc-2.28'
+# VSCODE_SYSROOT_PREFIX intentionally unset: install-sysroot.ts defaults to
+# '-glibc-2.28-gcc-10.5.0' which matches build/checksums/vscode-sysroot.txt (1.121.0+).
+# The old '-glibc-2.28' suffix no longer has a checksum entry.
 
 if [[ "${VSCODE_ARCH}" == "arm64" || "${VSCODE_ARCH}" == "armhf" ]]; then
   export VSCODE_SKIP_SYSROOT=1
