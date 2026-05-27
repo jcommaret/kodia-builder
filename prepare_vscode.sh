@@ -260,10 +260,10 @@ fi
 
 "${REPO_ROOT}/scripts/undo_telemetry.sh"
 
-replace 's|Microsoft Corporation|Void|' build/lib/electron.js
-replace 's|Microsoft Corporation|Void|' build/lib/electron.ts
-replace 's|([0-9]) Microsoft|\1 Void|' build/lib/electron.js
-replace 's|([0-9]) Microsoft|\1 Void|' build/lib/electron.ts
+[[ -f build/lib/electron.js ]] && replace 's|Microsoft Corporation|Void|' build/lib/electron.js
+[[ -f build/lib/electron.ts ]] && replace 's|Microsoft Corporation|Void|' build/lib/electron.ts
+[[ -f build/lib/electron.js ]] && replace 's|([0-9]) Microsoft|\1 Void|' build/lib/electron.js
+[[ -f build/lib/electron.ts ]] && replace 's|([0-9]) Microsoft|\1 Void|' build/lib/electron.ts
 
 if [[ "${OS_NAME}" == "linux" ]]; then
   # microsoft adds their apt repo to sources
