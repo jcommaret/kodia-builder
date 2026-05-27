@@ -272,6 +272,23 @@ fi
 # ›(U+203A) ❯(U+276F) ▸(U+25B8) ▶(U+25B6) appear as string/regex literals in
 # some TS source files; esbuild only auto-converts them inside /regex/ literals,
 # not inside quoted strings. Must be done after npm ci so ripgrep is available.
+# Remove Copilot: make prepareBuiltInCopilotRipgrepShim a no-op when the
+# extension or its SDK directory is absent (we don't install/bundle Copilot).
+if [[ -f build/lib/copilot.ts ]]; then
+  node --input-type=commonjs - << 'NODEEOF'
+const {readFileSync, writeFileSync} = require('fs');
+const f = 'build/lib/copilot.ts';
+let c = readFileSync(f, 'utf8');
+// Replace the throw with a warn+return so build doesn't fail when Copilot is absent.
+c = c.replace(
+  "throw new Error(`[prepareBuiltInCopilotRipgrepShim] Copilot SDK directory not found at ${copilotSdkBase}`);",
+  "console.warn('[prepareBuiltInCopilotRipgrepShim] Copilot SDK absent – shim skipped.'); return;"
+);
+writeFileSync(f, c);
+console.log('patched build/lib/copilot.ts: shim is now optional');
+NODEEOF
+fi
+
 echo "Escaping non-ASCII chars in TypeScript sources (esbuild minify guard)..."
 node --input-type=commonjs - << 'NODEEOF'
 const {readFileSync, writeFileSync, existsSync} = require('fs');

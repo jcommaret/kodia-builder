@@ -28,8 +28,10 @@ if [[ "${SHOULD_BUILD}" == "yes" ]]; then
 
   # Install dependencies for bundled extensions that have their own package.json.
   # The main npm ci does not always install git-hosted deps (e.g. open-remote-ssh).
+  # Copilot is excluded: we don't want it in the build.
   for ext_pkg in extensions/*/package.json; do
     ext_dir="$(dirname "${ext_pkg}")"
+    [[ "${ext_dir}" == "extensions/copilot" ]] && continue
     # Only install if the extension declares runtime dependencies
     if jq -e '.dependencies | length > 0' "${ext_pkg}" > /dev/null 2>&1; then
       echo "Installing deps for extension: ${ext_dir}"
@@ -43,6 +45,9 @@ if [[ "${SHOULD_BUILD}" == "yes" ]]; then
   done
 
   npm run gulp compile-extensions-build
+
+  # Remove Copilot from the compiled extensions so it is not packaged.
+  rm -rf .build/extensions/copilot
   npm run gulp minify-vscode
 
   if [[ "${OS_NAME}" == "osx" ]]; then
