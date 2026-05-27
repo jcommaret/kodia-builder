@@ -42,7 +42,7 @@ env:
 jobs:
   reh_linux:
     if: inputs.SHOULD_BUILD == 'yes'
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
@@ -50,9 +50,11 @@ jobs:
           - slug: X64
             vscode_arch: x64
             npm_arch: x64
+            runner: ubuntu-24.04
           - slug: ARM64
             vscode_arch: arm64
             npm_arch: arm64
+            runner: ubuntu-24.04-arm
     env:
       BUILD_SOURCEVERSION: ${{ inputs.BUILD_SOURCEVERSION }}
       DISABLED: ${{ vars[format('DISABLE_STABLE_LINUX_REH_{0}', matrix.slug)] }}
@@ -79,27 +81,20 @@ jobs:
         run: ./ci_repo.sh pr
         if: env.DISABLED != 'yes'
 
-      - name: Setup GCC
-        uses: egor-tensin/setup-gcc@v2
-        with:
-          version: 10
-          platform: x64
-        if: env.DISABLED != 'yes'
-
       - name: Setup Node.js environment
         uses: actions/setup-node@v6
         with:
           node-version: '22.22.3'
         if: env.DISABLED != 'yes'
 
+      - name: Install dependencies
+        run: ./build/linux/deps.sh
+        if: env.DISABLED != 'yes'
+
       - name: Setup Python 3
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
-        if: env.DISABLED != 'yes'
-
-      - name: Install libkrb5-dev
-        run: sudo apt-get update -y && sudo apt-get install -y libkrb5-dev
         if: env.DISABLED != 'yes'
 
       - name: Platform CI setup

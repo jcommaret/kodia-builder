@@ -140,6 +140,22 @@ if [[ "${OS_NAME}" == "osx" ]]; then
 elif [[ "${OS_NAME}" == "windows" ]]; then
   cd vscode || { echo "'vscode' dir not found"; exit 1; }
 
+  # Void: skip Appx/MSIX context-menu package – not built in OSS CI (Inno Setup would fail).
+  if [[ -f build/gulpfile.vscode.win32.ts ]]; then
+    node --input-type=commonjs - << 'NODEEOF'
+const {readFileSync, writeFileSync} = require('fs');
+const f = 'build/gulpfile.vscode.win32.ts';
+let c = readFileSync(f, 'utf8');
+const needle = "if (quality === 'stable' || quality === 'insider') {";
+const patch = "if (false /* Void: no Appx package */ && (quality === 'stable' || quality === 'insider')) {";
+if (c.includes(needle) && !c.includes('Void: no Appx package')) {
+  c = c.replace(needle, patch);
+  writeFileSync(f, c);
+  console.log('patched build/gulpfile.vscode.win32.ts: Appx disabled');
+}
+NODEEOF
+  fi
+
   # Contournement Inno (x.y.z.w) : patch temporaire de package.json, puis restauration x.y.z
   # shellcheck source=scripts/lib/ci_lib.sh
   source "${VOID_BUILDER_ROOT:-${GITHUB_WORKSPACE:-.}}/scripts/lib/ci_lib.sh"

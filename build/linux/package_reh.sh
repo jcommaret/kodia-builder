@@ -49,6 +49,10 @@ elif [[ "${VSCODE_ARCH}" == "arm64" ]]; then
 
   export VSCODE_SKIP_SYSROOT=1
   export USE_GNUPP2A=1
+  # Native arm64 runner: no cross-compilation sysroot needed.
+  if [[ "$(uname -m)" == "aarch64" ]]; then
+    export VSCODE_SKIP_SETUPENV=1
+  fi
 elif [[ "${VSCODE_ARCH}" == "armhf" ]]; then
   EXPECTED_GLIBC_VERSION="2.30"
 
@@ -56,6 +60,9 @@ elif [[ "${VSCODE_ARCH}" == "armhf" ]]; then
 
   export VSCODE_SKIP_SYSROOT=1
   export USE_GNUPP2A=1
+  if [[ "$(uname -m)" == "armv7l" || "$(uname -m)" == "armv8l" ]]; then
+    export VSCODE_SKIP_SETUPENV=1
+  fi
 elif [[ "${VSCODE_ARCH}" == "ppc64le" ]]; then
   VSCODE_REMOTE_DEPENDENCIES_CONTAINER_NAME="vscodium/vscodium-linux-build-agent:focal-devtoolset-ppc64le"
 
@@ -85,7 +92,8 @@ export ELECTRON_SKIP_BINARY_DOWNLOAD=1
 export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 export VSCODE_PLATFORM='linux'
 export VSCODE_SKIP_NODE_VERSION_CHECK=1
-export VSCODE_SYSROOT_PREFIX="-glibc-${GLIBC_VERSION}"
+# VSCODE_SYSROOT_PREFIX intentionally unset: install-sysroot.ts defaults to
+# '-glibc-2.28-gcc-10.5.0' which matches build/checksums/vscode-sysroot.txt (1.121.0+).
 
 EXPECTED_GLIBC_VERSION="${EXPECTED_GLIBC_VERSION:=GLIBC_VERSION}"
 VSCODE_HOST_MOUNT="$( pwd )"
