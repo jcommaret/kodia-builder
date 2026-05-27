@@ -268,6 +268,33 @@ fi
 
 "${REPO_ROOT}/scripts/undo_telemetry.sh"
 
+# Escape non-ASCII chars that fail esbuild's minification integrity check.
+# ›(U+203A) ❯(U+276F) ▸(U+25B8) ▶(U+25B6) appear as string/regex literals in
+# some TS source files; esbuild only auto-converts them inside /regex/ literals,
+# not inside quoted strings. Must be done after npm ci so ripgrep is available.
+echo "Escaping non-ASCII chars in TypeScript sources (esbuild minify guard)..."
+node --input-type=commonjs - << 'NODEEOF'
+const {readFileSync, writeFileSync, existsSync} = require('fs');
+const {execSync} = require('child_process');
+const CHARS = {'\u203a':'\\u203a', '\u276f':'\\u276f', '\u25b8':'\\u25b8', '\u25b6':'\\u25b6'};
+const PATTERN = /[\u203a\u276f\u25b8\u25b6]/g;
+const rg = './node_modules/@vscode/ripgrep/bin/rg';
+const needle = '\u203a\u276f\u25b8\u25b6';
+let files = [];
+try {
+  if (existsSync(rg)) {
+    files = execSync(rg + " --no-ignore -l '[" + needle + "]' src/", {encoding:'utf8'}).trim().split('\n').filter(Boolean);
+  } else {
+    files = execSync("grep -rl --include='*.ts' '[" + needle + "]' src/ 2>/dev/null || true", {encoding:'utf8', shell:'/bin/bash'}).trim().split('\n').filter(Boolean);
+  }
+} catch { /* no matches — no files need fixing */ }
+for (const f of files) {
+  const orig = readFileSync(f, 'utf8');
+  const fixed = orig.replace(PATTERN, c => CHARS[c]);
+  if (fixed !== orig) { writeFileSync(f, fixed); console.log('fixed non-ASCII in:', f); }
+}
+NODEEOF
+
 [[ -f build/lib/electron.js ]] && replace 's|Microsoft Corporation|Void|' build/lib/electron.js
 [[ -f build/lib/electron.ts ]] && replace 's|Microsoft Corporation|Void|' build/lib/electron.ts
 [[ -f build/lib/electron.js ]] && replace 's|([0-9]) Microsoft|\1 Void|' build/lib/electron.js
