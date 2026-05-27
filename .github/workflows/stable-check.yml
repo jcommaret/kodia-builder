@@ -42,7 +42,7 @@ jobs:
       SHOULD_DEPLOY: ${{ steps.check.outputs.SHOULD_DEPLOY || env.SHOULD_DEPLOY }}
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           ref: ${{ env.GITHUB_BRANCH }}
 

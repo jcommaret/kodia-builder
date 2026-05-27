@@ -27,7 +27,7 @@ ci_apply_void_version
 
 GLIBC_VERSION="2.28"
 GLIBCXX_VERSION="3.4.26"
-NODE_VERSION="22.22.2"
+NODE_VERSION="22.22.3"
 
 export VSCODE_NODEJS_URLROOT='/download/release'
 export VSCODE_NODEJS_URLSUFFIX=''
