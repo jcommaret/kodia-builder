@@ -289,6 +289,18 @@ console.log('patched build/lib/copilot.ts: shim is now optional');
 NODEEOF
 fi
 
+# Remove extensions/copilot from the postinstall dirs so npm ci never installs it.
+if [[ -f build/npm/dirs.ts ]]; then
+  node --input-type=commonjs - << 'NODEEOF'
+const {readFileSync, writeFileSync} = require('fs');
+const f = 'build/npm/dirs.ts';
+let c = readFileSync(f, 'utf8');
+c = c.replace(/^\s*'extensions\/copilot',?\n/m, '');
+writeFileSync(f, c);
+console.log('patched build/npm/dirs.ts: removed extensions/copilot');
+NODEEOF
+fi
+
 echo "Escaping non-ASCII chars in TypeScript sources (esbuild minify guard)..."
 node --input-type=commonjs - << 'NODEEOF'
 const {readFileSync, writeFileSync, existsSync} = require('fs');

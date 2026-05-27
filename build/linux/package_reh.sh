@@ -167,7 +167,7 @@ done
 
 mv .npmrc.bak .npmrc
 
-node build/azure-pipelines/distro/mixin-npm
+node --experimental-strip-types build/azure-pipelines/distro/mixin-npm.ts
 
 export VSCODE_NODE_GLIBC="-glibc-${GLIBC_VERSION}"
 
