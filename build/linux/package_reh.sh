@@ -45,23 +45,25 @@ if [[ "${VSCODE_ARCH}" == "x64" ]]; then
 elif [[ "${VSCODE_ARCH}" == "arm64" ]]; then
   EXPECTED_GLIBC_VERSION="2.30"
 
-  VSCODE_REMOTE_DEPENDENCIES_CONTAINER_NAME="vscodium/vscodium-linux-build-agent:focal-devtoolset-arm64"
-
   export VSCODE_SKIP_SYSROOT=1
   export USE_GNUPP2A=1
-  # Native arm64 runner: no cross-compilation sysroot needed.
+  # Native arm64 runner: no cross-compilation sysroot or Docker container needed.
   if [[ "$(uname -m)" == "aarch64" ]]; then
     export VSCODE_SKIP_SETUPENV=1
+    VSCODE_REMOTE_DEPENDENCIES_CONTAINER_NAME=""
+  else
+    VSCODE_REMOTE_DEPENDENCIES_CONTAINER_NAME="vscodium/vscodium-linux-build-agent:focal-devtoolset-arm64"
   fi
 elif [[ "${VSCODE_ARCH}" == "armhf" ]]; then
   EXPECTED_GLIBC_VERSION="2.30"
-
-  VSCODE_REMOTE_DEPENDENCIES_CONTAINER_NAME="vscodium/vscodium-linux-build-agent:focal-devtoolset-armhf"
 
   export VSCODE_SKIP_SYSROOT=1
   export USE_GNUPP2A=1
   if [[ "$(uname -m)" == "armv7l" || "$(uname -m)" == "armv8l" ]]; then
     export VSCODE_SKIP_SETUPENV=1
+    VSCODE_REMOTE_DEPENDENCIES_CONTAINER_NAME=""
+  else
+    VSCODE_REMOTE_DEPENDENCIES_CONTAINER_NAME="vscodium/vscodium-linux-build-agent:focal-devtoolset-armhf"
   fi
 elif [[ "${VSCODE_ARCH}" == "ppc64le" ]]; then
   VSCODE_REMOTE_DEPENDENCIES_CONTAINER_NAME="vscodium/vscodium-linux-build-agent:focal-devtoolset-ppc64le"
@@ -99,7 +101,9 @@ EXPECTED_GLIBC_VERSION="${EXPECTED_GLIBC_VERSION:=GLIBC_VERSION}"
 VSCODE_HOST_MOUNT="$( pwd )"
 
 export VSCODE_HOST_MOUNT
-export VSCODE_REMOTE_DEPENDENCIES_CONTAINER_NAME
+if [[ -n "${VSCODE_REMOTE_DEPENDENCIES_CONTAINER_NAME:-}" ]]; then
+  export VSCODE_REMOTE_DEPENDENCIES_CONTAINER_NAME
+fi
 
 sed -i "/target/s/\"[0-9][0-9.]*\"/\"${NODE_VERSION}\"/" remote/.npmrc
 
