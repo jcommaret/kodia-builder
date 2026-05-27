@@ -73,7 +73,7 @@ if [[ "${OS_NAME}" == "osx" ]]; then
     echo "+ signing"
     export CODESIGN_IDENTITY AGENT_TEMPDIRECTORY
 
-    DEBUG="electron-osx-sign*" node vscode/build/darwin/sign.js "$( pwd )"
+    DEBUG="electron-osx-sign*" node --experimental-strip-types vscode/build/darwin/sign.ts "$( pwd )"
     # codesign --display --entitlements :- ""
 
     echo "+ notarize"
