@@ -398,6 +398,10 @@
       "ui"
     ]
   },
+  "win32ContextMenu": {
+    "x64": { "clsid": "{7cdd4320-22a5-4627-9adc-87a9a676865d}" },
+    "arm64": { "clsid": "{2de85f59-fe70-4cb3-a3b7-e7e0be501e6b}" }
+  },
   "extensionPointExtensionKind": {
     "typescriptServerPlugins": [
       "workspace"

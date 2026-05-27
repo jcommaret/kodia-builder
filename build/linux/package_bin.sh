@@ -17,7 +17,10 @@ export VOID_BUILDER_ROOT
 
 tar -xzf ./vscode.tar.gz
 
-chown -R root:root vscode
+# Only chown when running as root (container builds); skip on GitHub-hosted runners.
+if [[ "${EUID:-$(id -u)}" == "0" ]]; then
+  chown -R root:root vscode
+fi
 
 cd vscode || { echo "'vscode' dir not found"; exit 1; }
 
