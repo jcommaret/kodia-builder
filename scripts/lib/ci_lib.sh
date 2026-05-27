@@ -13,7 +13,14 @@ ci_write_github_env() {
 
 ci_git_safe_directory() {
   if [[ "${CI_BUILD}" != "no" ]]; then
-    git config --global --add safe.directory "/__w/$( echo "${GITHUB_REPOSITORY}" | awk '{print tolower($0)}' )"
+    local repo_lower
+    repo_lower=$( echo "${GITHUB_REPOSITORY}" | awk '{print tolower($0)}' )
+    git config --global --add safe.directory "/__w/${repo_lower}"
+    git config --global --add safe.directory "/__w/${repo_lower}/${repo_lower##*/}"
+    if [[ -n "${GITHUB_WORKSPACE:-}" ]]; then
+      git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+      git config --global --add safe.directory "${GITHUB_WORKSPACE}/vscode"
+    fi
   fi
 }
 
@@ -39,6 +46,8 @@ ci_check_cron_or_pr() {
   if [[ "${SHOULD_DEPLOY}" == "yes" ]]; then
     export INCREMENT_VERSION="yes"
   fi
+
+  export GITHUB_BRANCH="${GITHUB_BRANCH:-${GITHUB_REF_NAME}}"
 
   ci_write_github_env \
     "GITHUB_BRANCH=${GITHUB_BRANCH}" \

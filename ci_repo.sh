@@ -17,7 +17,9 @@ ci_repo_pr() {
 
     git config --global user.email "$( echo "${GITHUB_USERNAME}" | awk '{print tolower($0)}' )-ci@not-real.com"
     git config --global user.name "${GITHUB_USERNAME} CI"
-    git fetch --unshallow
+    if [[ -f .git/shallow ]]; then
+      git fetch --unshallow
+    fi
     git fetch origin "pull/${PULL_REQUEST_ID}/head"
     git checkout FETCH_HEAD
     git merge --no-edit "origin/${BRANCH_NAME}"
@@ -49,11 +51,16 @@ ci_repo_void() {
   mkdir -p vscode
   cd vscode || { echo "'vscode' dir not found"; exit 1; }
 
-  git init -q
-  git remote add origin "https://github.com/${VOID_REPO}.git"
   # CI resilience: avoid hard-failing checkout on missing remote LFS objects.
-  # This keeps LFS pointers instead of downloading blobs during checkout.
   export GIT_LFS_SKIP_SMUDGE=1
+
+  git init -q
+  if git remote get-url origin &>/dev/null; then
+    git remote set-url origin "https://github.com/${VOID_REPO}.git"
+  else
+    git remote add origin "https://github.com/${VOID_REPO}.git"
+  fi
+  git config --global --add safe.directory "$(pwd)"
 
   if [[ -n "${VOID_COMMIT}" ]]; then
     echo "Using explicit commit ${VOID_COMMIT}"
@@ -119,7 +126,14 @@ ci_repo_void() {
 
 ci_git_safe_directory() {
   if [[ "${CI_BUILD}" != "no" ]]; then
-    git config --global --add safe.directory "/__w/$( echo "${GITHUB_REPOSITORY}" | awk '{print tolower($0)}' )"
+    local repo_lower
+    repo_lower=$( echo "${GITHUB_REPOSITORY}" | awk '{print tolower($0)}' )
+    git config --global --add safe.directory "/__w/${repo_lower}"
+    git config --global --add safe.directory "/__w/${repo_lower}/${repo_lower##*/}"
+    if [[ -n "${GITHUB_WORKSPACE:-}" ]]; then
+      git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+      git config --global --add safe.directory "${GITHUB_WORKSPACE}/vscode"
+    fi
   fi
 }
 

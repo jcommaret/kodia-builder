@@ -44,7 +44,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ env.GITHUB_BRANCH }}
+          fetch-depth: 0
 
       - name: Checkout builder PR and clone Void
         env:

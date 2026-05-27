@@ -71,8 +71,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-        with:
-          ref: ${{ env.GITHUB_BRANCH }}
         if: env.DISABLED != 'yes'
 
       - name: Switch to relevant branch
