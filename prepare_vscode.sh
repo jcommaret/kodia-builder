@@ -110,6 +110,13 @@ for i in {1..5}; do # try 5 times
     npm ci && break
   fi
 
+  echo "npm ci failed (attempt ${i}), trying npm install fallback..."
+  if [[ "${CI_BUILD}" != "no" && "${OS_NAME}" == "osx" ]]; then
+    CXX=clang++ npm install --no-audit --no-fund && break
+  else
+    npm install --no-audit --no-fund && break
+  fi
+
   if [[ $i == 3 ]]; then
     echo "Npm install failed too many times" >&2
     exit 1
