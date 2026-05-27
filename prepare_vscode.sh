@@ -36,6 +36,14 @@ echo "ORG_NAME=\"${ORG_NAME}\""
 echo "Applying patches at ../patches/*.patch..." # Void comment
 for file in ../patches/*.patch; do
   if [[ -f "${file}" ]]; then
+    # Upstream drift in Void regularly breaks these patches.
+    # - policies.patch: policy-watcher churn in package.json
+    # - add-remote-url.patch: gulpfile JS->TS migration in upstream
+    # Policy watcher lock is handled separately by patches/helper/apply_policy_watcher_lock.sh.
+    if [[ "$(basename "${file}")" == "policies.patch" || "$(basename "${file}")" == "add-remote-url.patch" ]]; then
+      echo "Skipping volatile patch: ${file}"
+      continue
+    fi
     apply_patch "${file}"
   fi
 done
