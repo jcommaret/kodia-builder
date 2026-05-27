@@ -22,6 +22,14 @@ source "${REPO_ROOT}/scripts/lib/ci_lib.sh"
 
 cd vscode || { echo "'vscode' dir not found"; exit 1; }
 
+# nls.ts uses `!typescript` which is falsy for empty strings "".
+# An empty .ts file (e.g. dialogHandler.ts in jcommaret/void) produces sourcesContent:[""]
+# which causes a spurious build error. Allow empty source content through; the patch()
+# function already returns early when there are no localize() calls.
+if [[ -f build/lib/nls.ts ]]; then
+  replace 's/if \(!typescript\) \{/if (typescript == null) {/' build/lib/nls.ts
+fi
+
 "${REPO_ROOT}/scripts/update_settings.sh"
 
 # apply patches
