@@ -41,7 +41,7 @@ env:
 
 jobs:
   build_linux:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
@@ -49,13 +49,11 @@ jobs:
           - slug: X64
             vscode_arch: x64
             npm_arch: x64
-            image: vscodium/vscodium-linux-build-agent:focal-x64
+            runner: ubuntu-24.04
           - slug: ARM64
             vscode_arch: arm64
             npm_arch: arm64
-            image: vscodium/vscodium-linux-build-agent:focal-arm64
-    container:
-      image: ${{ matrix.image }}
+            runner: ubuntu-24.04-arm
     env:
       BUILD_SOURCEVERSION: ${{ inputs.BUILD_SOURCEVERSION }}
       DISABLED: ${{ vars[format('DISABLE_STABLE_LINUX_APP_{0}', matrix.slug)] }}
@@ -91,12 +89,6 @@ jobs:
           DISABLE_APPIMAGE: ${{ vars.DISABLE_STABLE_APPIMAGE }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./ci_platform.sh
-        if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
-
-      - name: Add ubuntu-toolchain-r PPA keys
-        run: |
-          sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 2C277A0A352154E5
-          sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 1E9377A2BA9EF27F
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
 
       - name: Install dependencies
