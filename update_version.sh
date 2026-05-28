@@ -112,11 +112,10 @@ generateJson() {
     return 1
   fi
 
-  sha1hash=$( awk '{ print $1 }' "${ASSETS_DIR}/${ASSET_NAME}.sha1" )
   sha256hash=$( awk '{ print $1 }' "${ASSETS_DIR}/${ASSET_NAME}.sha256" )
 
   # check that nothing is blank (blank indicates something awry with build)
-  for key in url name version productVersion sha1hash timestamp sha256hash; do
+  for key in url name version productVersion timestamp sha256hash; do
     if [[ -z "${!key}" ]]; then
       echo "Variable '${key}' is empty; exiting..."
       exit 1
@@ -129,10 +128,9 @@ generateJson() {
     --arg name            "${name}" \
     --arg version         "${version}" \
     --arg productVersion  "${productVersion}" \
-    --arg hash            "${sha1hash}" \
     --arg timestamp       "${timestamp}" \
     --arg sha256hash      "${sha256hash}" \
-    '. | .url=$url | .name=$name | .version=$version | .productVersion=$productVersion | .hash=$hash | .timestamp=$timestamp | .sha256hash=$sha256hash' \
+    '. | .url=$url | .name=$name | .version=$version | .productVersion=$productVersion | .timestamp=$timestamp | .sha256hash=$sha256hash' \
     <<<'{}' )
 }
 

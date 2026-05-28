@@ -292,19 +292,14 @@ write_asset_checksums() {
   echo "Calculating checksum for ${file}"
   if [[ "${OS_NAME}" == "osx" ]] && command -v shasum &>/dev/null; then
     shasum -a 256 "${file}" | awk '{print $1}' > "${file}.sha256"
-    shasum -a 1 "${file}" | awk '{print $1}' > "${file}.sha1"
   elif command -v checksum &>/dev/null; then
     checksum -a sha256 "${file}" > "${file}.sha256"
-    checksum "${file}" > "${file}.sha1"
   elif [[ "${OS_NAME}" == "windows" ]] && command -v certutil &>/dev/null; then
     certutil -hashfile "${file}" SHA256 | awk 'NR==2 {print $1}' > "${file}.sha256"
-    certutil -hashfile "${file}" SHA1 | awk 'NR==2 {print $1}' > "${file}.sha1"
   elif command -v shasum &>/dev/null; then
     shasum -a 256 "${file}" | awk '{print $1}' > "${file}.sha256"
-    shasum -a 1 "${file}" | awk '{print $1}' > "${file}.sha1"
   elif command -v sha256sum &>/dev/null; then
     sha256sum "${file}" | awk '{print $1}' > "${file}.sha256"
-    sha1sum "${file}" | awk '{print $1}' > "${file}.sha1"
   else
     echo "No checksum tool available for ${file}" >&2
     return 1

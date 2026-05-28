@@ -66,7 +66,7 @@ release_upload_assets() {
     exit 1
   fi
 
-  if [[ ! -d assets ]] || [[ -z "$(find assets -maxdepth 1 -type f ! -name '*.sha1' ! -name '*.sha256' 2>/dev/null | head -1)" ]]; then
+  if [[ ! -d assets ]] || [[ -z "$(find assets -maxdepth 1 -type f ! -name '*.sha256' 2>/dev/null | head -1)" ]]; then
     echo "ERROR: assets/ is empty or missing — nothing to upload" >&2
     ls -la assets 2>/dev/null || true
     exit 1
@@ -96,8 +96,9 @@ release_upload_assets() {
     if [[ -f "${FILE}" ]] && [[ "${FILE}" != *.sha1 ]] && [[ "${FILE}" != *.sha256 ]]; then
       echo "::group::Uploading '${FILE}' at $( date "+%T" )"
       local -a UPLOAD_FILES=("${FILE}")
-      [[ -f "${FILE}.sha1" ]] && UPLOAD_FILES+=("${FILE}.sha1")
-      [[ -f "${FILE}.sha256" ]] && UPLOAD_FILES+=("${FILE}.sha256")
+      if [[ -f "${FILE}.sha256" ]]; then
+        echo "SHA256: $(cat "${FILE}.sha256")"
+      fi
       gh release upload --repo "${ASSETS_REPOSITORY}" "${RELEASE_VERSION}" "${UPLOAD_FILES[@]}"
 
       EXIT_STATUS=$?
