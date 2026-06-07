@@ -18,7 +18,7 @@ if [[ -z "${voidVersion}" && -n "${RELEASE_VERSION}" && "${RELEASE_VERSION}" == 
   voidVersion="${RELEASE_VERSION#*-}"
 fi
 # Doit rester aligné avec prepare_assets.sh / release.sh (PAS un nom codé en dur « voidversion »).
-APP_NAME="${APP_NAME:-Void}"
+  APP_NAME="${APP_NAME:-Kodia}"
 
 if [[ "${SHOULD_BUILD}" != "yes" && "${FORCE_UPDATE}" != "true" ]]; then
   echo "Will not update version JSON because we did not build"

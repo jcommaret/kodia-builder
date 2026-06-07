@@ -1,4 +1,4 @@
-# Scripts du pipeline Void Builder
+# Scripts du pipeline Kodia Builder
 
 Scripts hérités de VSCodium. **Points d’entrée** à la racine ; **bibliothèques et helpers** dans `scripts/`.
 
@@ -51,7 +51,7 @@ flowchart LR
 
 | Script | Rôle |
 |--------|------|
-| [`ci_repo.sh`](../ci_repo.sh) | Checkout PR + clone Void (`pr` \| `void` \| `all`) |
+| [`ci_repo.sh`](../ci_repo.sh) | Checkout PR + clone Kodia (`pr` \| `kodia` \| `all`) |
 | [`ci_check.sh`](../ci_check.sh) | Job **check** |
 | [`ci_platform.sh`](../ci_platform.sh) | `gh` + flags `SHOULD_BUILD_*` |
 | [`prepare_vscode.sh`](../prepare_vscode.sh) | Patches + config |

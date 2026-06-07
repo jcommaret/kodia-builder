@@ -18,7 +18,7 @@ if [[ "${SHOULD_BUILD}" == "yes" ]]; then
 
   # Skip monaco-compile-check as it's failing due to searchUrl property
   # Skip valid-layers-check as well since it might depend on monaco
-  # Void commented these out
+  # Kodia commented these out
   # npm run monaco-compile-check
   # npm run valid-layers-check
 
@@ -53,7 +53,7 @@ if [[ "${SHOULD_BUILD}" == "yes" ]]; then
 
   if [[ "${OS_NAME}" == "osx" ]]; then
     # generate Group Policy definitions
-    # node build/lib/policies darwin # Void commented this out
+    # node build/lib/policies darwin # Kodia commented this out
 
     npm run gulp "vscode-darwin-${VSCODE_ARCH}-min-ci"
 
@@ -64,7 +64,7 @@ if [[ "${SHOULD_BUILD}" == "yes" ]]; then
     VSCODE_PLATFORM="darwin"
   elif [[ "${OS_NAME}" == "windows" ]]; then
     # generate Group Policy definitions
-    # node build/lib/policies win32 # Void commented this out
+    # node build/lib/policies win32 # Kodia commented this out
 
     # in CI, packaging will be done by a different job
     if [[ "${CI_BUILD}" == "no" ]]; then

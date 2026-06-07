@@ -27,7 +27,7 @@ on:
 
 env:
   ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
-  APP_NAME: Void
+  APP_NAME: Kodia
   ASSETS_REPOSITORY: jcommaret/void
   BINARY_NAME: void
   DISABLE_UPDATE: 'yes'
@@ -84,7 +84,7 @@ jobs:
           python-version: '3.11'
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
 
-      - name: Clone Void
+      - name: Clone Kodia
         env:
           VOID_COMMIT: ${{ github.event.inputs.void_commit }}
           VOID_RELEASE: ${{ github.event.inputs.void_release }}

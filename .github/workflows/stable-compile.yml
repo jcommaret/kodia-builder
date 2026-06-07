@@ -30,7 +30,7 @@ on:
 
 env:
   ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
-  APP_NAME: Void
+  APP_NAME: Kodia
   ASSETS_REPOSITORY: jcommaret/void
   BINARY_NAME: void
   DISABLE_UPDATE: 'yes'
@@ -58,7 +58,7 @@ jobs:
       - uses: actions/checkout@v6
         if: env.SHOULD_BUILD == 'yes'
 
-      - name: Checkout builder PR and clone Void
+      - name: Checkout builder PR and clone Kodia
         env:
           PULL_REQUEST_ID: ${{ github.event.inputs.checkout_pr }}
           VOID_COMMIT: ${{ github.event.inputs.void_commit }}
