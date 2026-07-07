@@ -1,5 +1,0 @@
-@@ -1548,3 +1548,3 @@
- 		return <typeof vscode>{
--			version: initData.version,
-+			version: initData.version.replace(/\.0+/g, '.'),
- 			// namespaces
