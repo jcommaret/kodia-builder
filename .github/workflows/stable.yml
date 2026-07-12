@@ -17,6 +17,10 @@ on:
         type: boolean
         description: Increment voidVersion (patch only) before release
         default: true
+      increment_minor:
+        type: boolean
+        description: Increment voidVersion minor instead of patch (resets patch to 0)
+        default: false
   repository_dispatch:
     types: [stable]
   push:

@@ -121,6 +121,22 @@ ci_bump_patch() {
   echo "${major}.${minor}.${patch}"
 }
 
+# Incrémente le minor et remet le patch à 0 (ex. 1.5.3 → 1.6.0).
+ci_bump_minor() {
+  local version="${1}"
+  local major minor
+
+  if [[ ! "${version}" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+    echo "Invalid semver for bump: ${version}" >&2
+    return 1
+  fi
+
+  major="${BASH_REMATCH[1]}"
+  minor="${BASH_REMATCH[2]}"
+  minor=$((minor + 1))
+  echo "${major}.${minor}.0"
+}
+
 ci_extract_void_version_from_tag() {
   local tag="${1}"
   local void_part=""
@@ -218,7 +234,11 @@ ci_bump_version() {
     echo "No prior void release found on ${ASSETS_REPOSITORY}; bumping from ${base_version}"
   fi
 
-  VOID_VERSION=$(ci_bump_patch "${base_version}")
+  if [[ "${INCREMENT_MINOR}" == "yes" ]]; then
+    VOID_VERSION=$(ci_bump_minor "${base_version}")
+  else
+    VOID_VERSION=$(ci_bump_patch "${base_version}")
+  fi
 
   if [[ -n "${MS_TAG}" ]]; then
     RELEASE_VERSION="${MS_TAG}-${VOID_VERSION}"
