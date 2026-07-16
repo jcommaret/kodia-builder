@@ -85,6 +85,10 @@ jobs:
           node-version: '24.18.0'
         if: env.DISABLED != 'yes'
 
+      - name: Pin npm version
+        run: npm install -g "npm@<11.2.0"
+        if: env.DISABLED != 'yes'
+
       - name: Install dependencies
         run: ./build/linux/deps.sh
         if: env.DISABLED != 'yes'
