@@ -75,7 +75,7 @@ jobs:
       - name: Setup Node.js environment
         uses: actions/setup-node@v6
         with:
-          node-version: '22.22.3'
+          node-version: '24.18.0'
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
 
       - name: Setup Python 3
