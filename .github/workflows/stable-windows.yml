@@ -101,6 +101,16 @@ jobs:
           arch: ${{ matrix.vscode_arch == 'arm64' && 'amd64_arm64' || 'x64' }}
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
 
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24.18.0'
+        if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
+
+      - name: Pin npm version
+        run: npm install -g "npm@<11.2.0"
+        if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
+
       - name: Build
         shell: bash
         env:
