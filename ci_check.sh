@@ -16,7 +16,7 @@ if [[ "${INCREMENT_VERSION}" == "yes" && "${SKIP_VERSION_BUMP}" != "yes" ]]; the
   ci_bump_version
 fi
 
-if [[ "${SHOULD_BUILD}" == "yes" ]]; then
+if [[ "${SHOULD_BUILD}" == "yes" && "${SHOULD_DEPLOY}" == "yes" ]]; then
   ci_install_gh
   STRONGER_GITHUB_TOKEN="${STRONGER_GITHUB_TOKEN}" GITHUB_TOKEN="${GITHUB_TOKEN}" ./release.sh --create-only
 fi
