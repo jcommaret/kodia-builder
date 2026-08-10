@@ -112,6 +112,26 @@ jobs:
         run: ./build.sh
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
 
+      # EILSEQ sur APFS : le log npm nomme le fichier au nom non-UTF-8 refusé.
+      - name: Dump npm debug logs
+        shell: bash
+        run: |
+          for f in ~/.npm/_logs/*-debug-*.log; do
+            [[ -f "${f}" ]] || continue
+            echo "::group::${f}"
+            grep -iE 'EILSEQ|TAR_ENTRY_ERROR|extract|reify' "${f}" | tail -100
+            echo "::endgroup::"
+          done
+        if: failure()
+
+      - name: Upload npm debug logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-logs-macos-${{ matrix.vscode_arch }}
+          path: ~/.npm/_logs/
+          retention-days: 7
+        if: failure()
+
       - name: Clean dependencies cache
         run: rm -rf /tmp/vscode-amd64-sysroot /tmp/debian_bullseye_amd64-sysroot
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
