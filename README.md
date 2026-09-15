@@ -1,10 +1,27 @@
 # Kodia Builder
 
-This is a fork of VSCodium, which has a nice build pipeline that we're using for Kodia. Big thanks to the CodeStory team for inspiring this.
+Fork de VSCodium qui compile les binaires Kodia (`.dmg`, `.zip`, etc.) via
+GitHub Actions, les publie sur [`kodia/binaries`](https://github.com/kodia/binaries/releases)
+et met à jour [`kodia/versions`](https://github.com/kodia/versions).
 
-The purpose of this VSCodium fork is to run [Github Actions](https://github.com/kodia/kodia-builder/actions). These actions build all the Kodia assets (.dmg, .zip, etc), store these binaries on a release in [`kodia/binaries`](https://github.com/kodia/binaries/releases), and then set the latest version in a text file on [`kodia/versions`](https://github.com/kodia/versions) so Kodia knows how to update to the latest version.
+## Installation / build local
 
-The  `.patch` files from VSCodium get rid of telemetry in Kodia (the core purpose of VSCodium) and change VSCode's auto-update logic so updates are checked against `kodia` and not `vscode` (we just had to swap out a few URLs). These changes described by the `.patch` files are applied to `kodia/` during the workflow run, and they're almost entirely straight from VSCodium, minus a few renames to Kodia.
+Le chemin normal, c’est **GitHub Actions** (workflow `stable.yml`). Pour
+rejouer en local :
+
+```bash
+git clone https://github.com/jcommaret/kodia-builder.git
+cd kodia-builder
+nvm install   # Node 22.22.3, voir .nvmrc
+nvm use
+```
+
+Les scripts d’entrée sont à la racine (`ci_check.sh`, `build.sh`, …).
+Détail : [`docs/SCRIPTS.md`](docs/SCRIPTS.md). Un build complet clone le
+dépôt Kodia et applique les patches VSCodium : prévoir du disque et du temps.
+
+Les fichiers `.patch` enlèvent la télémétrie et redirigent les mises à jour
+vers Kodia plutôt que VS Code.
 
 ## Notes
 
