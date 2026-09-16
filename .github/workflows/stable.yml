@@ -19,7 +19,7 @@ on:
         default: true
       increment_minor:
         type: boolean
-        description: Increment voidVersion minor instead of patch (resets patch to 0)
+        description: Increment voidVersion minor instead of patch (resets patch to 0). Implies increment_version.
         default: false
   repository_dispatch:
     types: [stable]

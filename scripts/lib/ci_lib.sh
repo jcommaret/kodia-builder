@@ -208,7 +208,8 @@ ci_bump_version_write_env() {
 }
 
 ci_bump_version() {
-  if [[ "${INCREMENT_VERSION}" != "yes" ]]; then
+  # A minor bump request always implies a bump, even if INCREMENT_VERSION was not set.
+  if [[ "${INCREMENT_VERSION}" != "yes" && "${INCREMENT_MINOR}" != "yes" ]]; then
     echo "Version increment disabled (INCREMENT_VERSION != yes)"
     return 0
   fi
