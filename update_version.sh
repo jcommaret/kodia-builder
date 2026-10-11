@@ -237,8 +237,7 @@ CHANGES=$( git status --porcelain )
 
 if [[ -n "${CHANGES}" ]]; then
   echo "Some changes have been found, pushing them"
-  dateAndMonth=$( date "+%D %T" )
-  git commit -m "CI update: ${dateAndMonth} (Build ${GITHUB_RUN_NUMBER})"
+  git commit -m "ci(release): update latest version manifests (build ${GITHUB_RUN_NUMBER})"
 if ! git push origin master --quiet; then
   git pull origin master
   git push origin master --quiet
@@ -251,7 +250,7 @@ fi
 if [[ "${WRITE_VERSION_FILE}" == "yes" ]]; then
   echo "${RELEASE_VERSION}" > VERSION
   git add VERSION
-  if ! git commit -m "Update VERSION file to ${RELEASE_VERSION}" --quiet; then
+  if ! git commit -m "chore(release): set VERSION to ${RELEASE_VERSION}" --quiet; then
     echo "No changes to VERSION file or already up to date."
   fi
   git push origin master --quiet
