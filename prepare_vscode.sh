@@ -108,6 +108,12 @@ else
   fi
 fi
 
+# Since VS Code 1.141 the postinstall fetches electron.d.ts using the Electron version read
+# from .npmrc, which ../npmrc does not carry. Fetch it now so the postinstall finds it in place.
+if [[ -f build/npm/electronTypes.ts ]]; then
+  node build/npm/electronTypes.ts
+fi
+
 mv .npmrc .npmrc.bak
 cp ../npmrc .npmrc
 
