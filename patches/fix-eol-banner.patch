@@ -1,37 +1,47 @@
 diff --git a/src/vs/workbench/browser/parts/banner/bannerPart.ts b/src/vs/workbench/browser/parts/banner/bannerPart.ts
-index 1f329c4..3e36bff 100644
 --- a/src/vs/workbench/browser/parts/banner/bannerPart.ts
 +++ b/src/vs/workbench/browser/parts/banner/bannerPart.ts
-@@ -11,3 +11,3 @@ import { InstantiationType, registerSingleton } from '../../../../platform/insta
+@@ -10,7 +10,7 @@
+ import { ActionBar } from '../../../../base/browser/ui/actionbar/actionbar.js';
+ import { InstantiationType, registerSingleton } from '../../../../platform/instantiation/common/extensions.js';
  import { IInstantiationService, ServicesAccessor } from '../../../../platform/instantiation/common/instantiation.js';
 -import { IStorageService } from '../../../../platform/storage/common/storage.js';
 +import { IStorageService, StorageScope } from '../../../../platform/storage/common/storage.js';
  import { IThemeService } from '../../../../platform/theme/common/themeService.js';
-@@ -30,2 +30,3 @@ import { widgetClose } from '../../../../platform/theme/common/iconRegistry.js';
+ import { ThemeIcon } from '../../../../base/common/themables.js';
+ import { Part } from '../../part.js';
+@@ -29,6 +29,7 @@
+ import { URI } from '../../../../base/common/uri.js';
+ import { widgetClose } from '../../../../platform/theme/common/iconRegistry.js';
  import { BannerFocused } from '../../../common/contextkeys.js';
 +import { INeverShowAgainOptions, NeverShowAgainScope } from '../../../../platform/notification/common/notification.js';
+ import { DisposableStore } from '../../../../base/common/lifecycle.js';
  
-@@ -67,3 +68,3 @@ export class BannerPart extends Part implements IBannerService {
+ // Banner Part
+@@ -68,7 +69,7 @@
+ 	constructor(
+ 		@IThemeService themeService: IThemeService,
  		@IWorkbenchLayoutService layoutService: IWorkbenchLayoutService,
 -		@IStorageService storageService: IStorageService,
 +		@IStorageService private readonly storageService: IStorageService,
  		@IContextKeyService private readonly contextKeyService: IContextKeyService,
-@@ -187,2 +188,14 @@ export class BannerPart extends Part implements IBannerService {
+ 		@IInstantiationService private readonly instantiationService: IInstantiationService,
+ 		@IMarkdownRendererService private readonly markdownRendererService: IMarkdownRendererService,
+@@ -173,6 +174,11 @@
+ 	}
  
-+		if (item.neverShowAgain) {
-+			const scope = this.toStorageScope(item.neverShowAgain);
-+			const id = item.neverShowAgain.id;
-+
-+			// If the user already picked to not show the notification
-+			// again, we return with a no-op notification here
-+			if (this.storageService.getBoolean(id, scope)) {
-+				this.close(item);
-+				return;
-+			}
+ 	show(item: IBannerItem): void {
++		// If the user already picked to not show this banner again, don't show it
++		if (item.neverShowAgain && this.storageService.getBoolean(item.neverShowAgain.id, this.toStorageScope(item.neverShowAgain))) {
++			return;
 +		}
 +
- 		// Clear previous item
-@@ -235,2 +248,15 @@ export class BannerPart extends Part implements IBannerService {
+ 		this.items.delete(item.id);
+ 		this.items.set(item.id, item);
+ 		this.renderActiveItem();
+@@ -253,6 +259,19 @@
+ 		}
+ 	}
  
 +	private toStorageScope(options: INeverShowAgainOptions): StorageScope {
 +		switch (options.scope) {
@@ -47,15 +57,24 @@ index 1f329c4..3e36bff 100644
 +	}
 +
  	toJSON(): object {
+ 		return {
+ 			type: Parts.BANNER_PART
 diff --git a/src/vs/workbench/services/banner/browser/bannerService.ts b/src/vs/workbench/services/banner/browser/bannerService.ts
-index 2db0fa4..d179055 100644
 --- a/src/vs/workbench/services/banner/browser/bannerService.ts
 +++ b/src/vs/workbench/services/banner/browser/bannerService.ts
-@@ -10,2 +10,3 @@ import { ILinkDescriptor } from '../../../../platform/opener/browser/link.js';
+@@ -8,6 +8,7 @@
+ import { createDecorator } from '../../../../platform/instantiation/common/instantiation.js';
+ import { ILinkDescriptor } from '../../../../platform/opener/browser/link.js';
  import { ThemeIcon } from '../../../../base/common/themables.js';
 +import { INeverShowAgainOptions } from '../../../../platform/notification/common/notification.js';
  
-@@ -18,2 +19,3 @@ export interface IBannerItem {
+ export interface IBannerItem {
+ 	readonly id: string;
+@@ -16,6 +17,7 @@
+ 	readonly actions?: ReadonlyArray<ILinkDescriptor>;
+ 	readonly ariaLabel?: string;
  	readonly onClose?: () => void;
 +	readonly neverShowAgain?: INeverShowAgainOptions;
  	readonly closeLabel?: string;
+ 	/** Higher-priority banners are shown first. Equal priorities use the most recently shown item. */
+ 	readonly priority?: number;
