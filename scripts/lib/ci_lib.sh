@@ -141,8 +141,11 @@ ci_extract_void_version_from_tag() {
   local tag="${1}"
   local void_part=""
 
-  if [[ -n "${MS_TAG}" && "${tag}" == "${MS_TAG}"-* ]]; then
-    void_part="${tag#${MS_TAG}-}"
+  # Release tags are "<VS Code version>-<Kodia version>". Read the Kodia part whatever the VS Code
+  # version, so the numbering keeps going up across VS Code upgrades instead of restarting from
+  # product.json's voidVersion (1.121.0-2.4.3 was followed by 1.141.0-2.1.0).
+  if [[ "${tag}" =~ ^[0-9]+\.[0-9]+\.[0-9]+-([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+    void_part="${BASH_REMATCH[1]}"
   elif [[ "${tag}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
     void_part="${tag}"
   fi
