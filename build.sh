@@ -23,12 +23,11 @@ if [[ "${SHOULD_BUILD}" == "yes" ]]; then
   # npm run valid-layers-check
 
   npm run buildreact
-  npm run gulp compile-build-without-mangling
   npm run gulp compile-extension-media
 
   # Install dependencies for bundled extensions that have their own package.json.
   # Postinstall (dirs.ts) covers most extensions, but macOS CI can skip some installs
-  # (install-state cache / parallel postinstall). compile-extensions-build also needs
+  # (install-state cache / parallel postinstall). core-ci also needs
   # devDependencies for esbuild extensions (e.g. jake/grunt/gulp @types/node for tsgo).
   # Copilot is excluded: we don't want it in the build.
   for ext_pkg in extensions/*/package.json; do
@@ -45,11 +44,14 @@ if [[ "${SHOULD_BUILD}" == "yes" ]]; then
     fi
   done
 
-  npm run gulp compile-extensions-build
+  # Since VS Code 1.141, core-ci replaces compile-build-without-mangling, compile-extensions-build
+  # and the minify-vscode* tasks: it builds the non-native extensions, type-checks, and bundles
+  # out-vscode-min, out-vscode-reh-min and out-vscode-reh-web-min. The *-min-ci tasks then only
+  # package (native extensions included).
+  npm run gulp core-ci
 
   # Remove Copilot from the compiled extensions so it is not packaged.
   rm -rf .build/extensions/copilot
-  npm run gulp minify-vscode
 
   if [[ "${OS_NAME}" == "osx" ]]; then
     # generate Group Policy definitions
@@ -95,12 +97,10 @@ if [[ "${SHOULD_BUILD}" == "yes" ]]; then
   fi
 
   if [[ "${SHOULD_BUILD_REH}" != "no" ]]; then
-    npm run gulp minify-vscode-reh
     npm run gulp "vscode-reh-${VSCODE_PLATFORM}-${VSCODE_ARCH}-min-ci"
   fi
 
   if [[ "${SHOULD_BUILD_REH_WEB}" != "no" ]]; then
-    npm run gulp minify-vscode-reh-web
     npm run gulp "vscode-reh-web-${VSCODE_PLATFORM}-${VSCODE_ARCH}-min-ci"
   fi
 
