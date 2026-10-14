@@ -31,12 +31,12 @@ on:
 env:
   ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
   APP_NAME: Kodia
-  ASSETS_REPOSITORY: jcommaret/void
+  ASSETS_REPOSITORY: jcommaret/kodia
   BINARY_NAME: void
   DISABLE_UPDATE: 'yes'
-  GH_REPO_PATH: jcommaret/void
+  GH_REPO_PATH: jcommaret/kodia
   ORG_NAME: jcommaret
-  VERSIONS_REPOSITORY: jcommaret/void
+  VERSIONS_REPOSITORY: jcommaret/kodia
   VSCODE_QUALITY: stable
 
 jobs:
