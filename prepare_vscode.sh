@@ -162,23 +162,22 @@ setpath_json() {
 cp product.json{,.bak}
 
 setpath "product" "checksumFailMoreInfoUrl" "https://go.microsoft.com/fwlink/?LinkId=828886"
-setpath "product" "documentationUrl" "https://voideditor.com"
+setpath "product" "documentationUrl" "https://github.com/${GH_REPO_PATH}#readme"
 # setpath_json "product" "extensionsGallery" '{"serviceUrl": "https://open-vsx.org/vscode/gallery", "itemUrl": "https://open-vsx.org/vscode/item"}'
 setpath "product" "introductoryVideosUrl" "https://go.microsoft.com/fwlink/?linkid=832146"
 setpath "product" "keyboardShortcutsUrlLinux" "https://go.microsoft.com/fwlink/?linkid=832144"
 setpath "product" "keyboardShortcutsUrlMac" "https://go.microsoft.com/fwlink/?linkid=832143"
 setpath "product" "keyboardShortcutsUrlWin" "https://go.microsoft.com/fwlink/?linkid=832145"
-setpath "product" "licenseUrl" "https://github.com/voideditor/void/blob/main/LICENSE.txt"
+setpath "product" "licenseUrl" "https://github.com/${GH_REPO_PATH}/blob/master/LICENSE.txt"
 # setpath_json "product" "linkProtectionTrustedDomains" '["https://open-vsx.org"]'
 # setpath "product" "releaseNotesUrl" "https://go.microsoft.com/fwlink/?LinkID=533483#vscode"
-setpath "product" "reportIssueUrl" "https://github.com/voideditor/void/issues/new"
-setpath "product" "requestFeatureUrl" "https://github.com/voideditor/void/issues/new"
+setpath "product" "reportIssueUrl" "https://github.com/${GH_REPO_PATH}/issues/new"
+setpath "product" "requestFeatureUrl" "https://github.com/${GH_REPO_PATH}/issues/new"
 setpath "product" "tipsAndTricksUrl" "https://go.microsoft.com/fwlink/?linkid=852118"
-setpath "product" "twitterUrl" "https://x.com/thevoideditor"
 
 if [[ "${DISABLE_UPDATE}" != "yes" ]]; then
-  setpath "product" "updateUrl" "https://raw.githubusercontent.com/voideditor/versions/refs/heads/main"
-  setpath "product" "downloadUrl" "https://github.com/voideditor/binaries/releases"
+  setpath "product" "updateUrl" "https://raw.githubusercontent.com/${VERSIONS_REPOSITORY:-${GH_REPO_PATH}}/refs/heads/master"
+  setpath "product" "downloadUrl" "https://github.com/${ASSETS_REPOSITORY:-${GH_REPO_PATH}}/releases"
 fi
 
 if [[ "${VSCODE_QUALITY}" == "insider" ]]; then
@@ -354,28 +353,28 @@ if [[ "${OS_NAME}" == "linux" ]]; then
   # fix the packages metadata
   # code.appdata.xml
   sed -i 's|Visual Studio Code|Void|g' resources/linux/code.appdata.xml
-  sed -i 's|https://code.visualstudio.com/docs/setup/linux|https://voideditor.com|' resources/linux/code.appdata.xml
+  sed -i "s|https://code.visualstudio.com/docs/setup/linux|https://github.com/${GH_REPO_PATH}|" resources/linux/code.appdata.xml
   sed -i 's|https://code.visualstudio.com/home/home-screenshot-linux-lg.png|https://vscodium.com/img/vscodium.png|' resources/linux/code.appdata.xml
-  sed -i 's|https://code.visualstudio.com|https://voideditor.com|' resources/linux/code.appdata.xml
+  sed -i "s|https://code.visualstudio.com|https://github.com/${GH_REPO_PATH}|" resources/linux/code.appdata.xml
 
   # control.template
   sed -i 's|Microsoft Corporation <vscode-linux@microsoft.com>|Void Team <team@voideditor.com>|'  resources/linux/debian/control.template
   sed -i 's|Visual Studio Code|Void|g' resources/linux/debian/control.template
-  sed -i 's|https://code.visualstudio.com/docs/setup/linux|https://voideditor.com|' resources/linux/debian/control.template
-  sed -i 's|https://code.visualstudio.com|https://voideditor.com|' resources/linux/debian/control.template
+  sed -i "s|https://code.visualstudio.com/docs/setup/linux|https://github.com/${GH_REPO_PATH}|" resources/linux/debian/control.template
+  sed -i "s|https://code.visualstudio.com|https://github.com/${GH_REPO_PATH}|" resources/linux/debian/control.template
 
   # code.spec.template
   sed -i 's|Microsoft Corporation|Void Team|' resources/linux/rpm/code.spec.template
   sed -i 's|Visual Studio Code Team <vscode-linux@microsoft.com>|Void Team <team@voideditor.com>|' resources/linux/rpm/code.spec.template
   sed -i 's|Visual Studio Code|Void|' resources/linux/rpm/code.spec.template
-  sed -i 's|https://code.visualstudio.com/docs/setup/linux|https://voideditor.com|' resources/linux/rpm/code.spec.template
-  sed -i 's|https://code.visualstudio.com|https://voideditor.com|' resources/linux/rpm/code.spec.template
+  sed -i "s|https://code.visualstudio.com/docs/setup/linux|https://github.com/${GH_REPO_PATH}|" resources/linux/rpm/code.spec.template
+  sed -i "s|https://code.visualstudio.com|https://github.com/${GH_REPO_PATH}|" resources/linux/rpm/code.spec.template
 
   # snapcraft.yaml
   sed -i 's|Visual Studio Code|Void|'  resources/linux/rpm/code.spec.template
 elif [[ "${OS_NAME}" == "windows" ]]; then
   # code.iss
-  sed -i 's|https://code.visualstudio.com|https://voideditor.com|' build/win32/code.iss
+  sed -i "s|https://code.visualstudio.com|https://github.com/${GH_REPO_PATH}|" build/win32/code.iss
   sed -i 's|Microsoft Corporation|Void|' build/win32/code.iss
 fi
 

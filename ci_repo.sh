@@ -39,7 +39,7 @@ ci_repo_void() {
   ci_git_safe_directory
 
   local VOID_REPO VOID_BRANCH
-  VOID_REPO="${VOID_REPO:-${GH_REPO_PATH:-voideditor/void}}"
+  VOID_REPO="${VOID_REPO:-${GH_REPO_PATH:-jcommaret/kodia}}"
 
   if [[ -z "${VOID_BRANCH}" ]]; then
     VOID_BRANCH=$( git ls-remote --symref "https://github.com/${VOID_REPO}.git" HEAD 2>/dev/null | awk '/^ref:/ { sub("refs/heads/", "", $2); print $2; exit }' )
