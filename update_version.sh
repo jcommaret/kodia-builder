@@ -3,20 +3,6 @@
 
 set -e
 
-# voidVersion : priorité à VOID_VERSION (job check), comme prepare_assets.sh
-voidVersion="${VOID_VERSION:-}"
-[[ "${voidVersion}" == "null" ]] && voidVersion=""
-if [[ -z "${voidVersion}" ]]; then
-  voidVersion=$(jq -r '.voidVersion // empty' product.json 2>/dev/null || true)
-  [[ "${voidVersion}" == "null" ]] && voidVersion=""
-fi
-if [[ -z "${voidVersion}" ]] && [[ -f vscode/product.json ]]; then
-    voidVersion=$(jq -r '.voidVersion // empty' vscode/product.json)
-    [[ "${voidVersion}" == "null" ]] && voidVersion=""
-fi
-if [[ -z "${voidVersion}" && -n "${RELEASE_VERSION}" && "${RELEASE_VERSION}" == *-* ]]; then
-  voidVersion="${RELEASE_VERSION#*-}"
-fi
 # Doit rester aligné avec prepare_assets.sh / release.sh (PAS un nom codé en dur « voidversion »).
   APP_NAME="${APP_NAME:-Kodia}"
 
@@ -122,13 +108,13 @@ generateJson() {
     fi
   done
 
-  # generate json
+  # generate json (timestamp as a number: the app reads it as a date)
   JSON_DATA=$( jq \
     --arg url             "${url}" \
     --arg name            "${name}" \
     --arg version         "${version}" \
     --arg productVersion  "${productVersion}" \
-    --arg timestamp       "${timestamp}" \
+    --argjson timestamp   "${timestamp}" \
     --arg sha256hash      "${sha256hash}" \
     '. | .url=$url | .name=$name | .version=$version | .productVersion=$productVersion | .timestamp=$timestamp | .sha256hash=$sha256hash' \
     <<<'{}' )
@@ -186,40 +172,32 @@ updateLatestVersion() {
 }
 
 # Rester dans le clone versions : VERSION_PATH = stable/… sous ce dépôt ; assets = ${BUILDER_ROOT}/assets
+# One manifest per platform, at the path the app reads: <quality>/<os>-<arch>[-user|-archive]/latest.json
+# (createUpdateURL and kodiaUpdate.ts in jcommaret/kodia's src/vs/platform/update/). It always describes the latest
+# release; the app only takes it when it is a newer one than its own.
 if [[ "${OS_NAME}" == "osx" ]]; then
-  ASSET_NAME="${APP_NAME}-${voidVersion}-${VSCODE_ARCH}.dmg"
-  VERSION_PATH="${VSCODE_QUALITY}/darwin/${voidVersion}"
+  # Electron's autoUpdater (Squirrel.Mac) installs the signed app in this zip
+  ASSET_NAME="${APP_NAME}-darwin-${VSCODE_ARCH}-${RELEASE_VERSION}.zip"
+  VERSION_PATH="${VSCODE_QUALITY}/darwin-${VSCODE_ARCH}"
   updateLatestVersion
 elif [[ "${OS_NAME}" == "windows" ]]; then
-  # system installer (prepare_assets : pas de voidVersion dans le nom de fichier)
+  # system installer
   ASSET_NAME="${APP_NAME}Setup-${VSCODE_ARCH}-${RELEASE_VERSION}.exe"
-  VERSION_PATH="${VSCODE_QUALITY}/win32/${RELEASE_VERSION}/system"
+  VERSION_PATH="${VSCODE_QUALITY}/win32-${VSCODE_ARCH}"
   updateLatestVersion
 
   # user installer
   ASSET_NAME="${APP_NAME}UserSetup-${VSCODE_ARCH}-${RELEASE_VERSION}.exe"
-  VERSION_PATH="${VSCODE_QUALITY}/win32/${RELEASE_VERSION}/user"
+  VERSION_PATH="${VSCODE_QUALITY}/win32-${VSCODE_ARCH}-user"
   updateLatestVersion
 
-  # windows archive
+  # windows archive, also read by the MSI installs: both only get "download available", which opens the releases page
   ASSET_NAME="${APP_NAME}-win32-${VSCODE_ARCH}-${RELEASE_VERSION}.zip"
-  VERSION_PATH="${VSCODE_QUALITY}/win32/${RELEASE_VERSION}/archive"
+  VERSION_PATH="${VSCODE_QUALITY}/win32-${VSCODE_ARCH}-archive"
   updateLatestVersion
-
-  if [[ "${VSCODE_ARCH}" == "ia32" || "${VSCODE_ARCH}" == "x64" ]]; then
-    # msi
-    ASSET_NAME="${APP_NAME}-${VSCODE_ARCH}-${RELEASE_VERSION}.msi"
-    VERSION_PATH="${VSCODE_QUALITY}/win32/${RELEASE_VERSION}/msi"
-    updateLatestVersion
-
-    # updates-disabled msi
-    ASSET_NAME="${APP_NAME}-${VSCODE_ARCH}-updates-disabled-${RELEASE_VERSION}.msi"
-    VERSION_PATH="${VSCODE_QUALITY}/win32/${RELEASE_VERSION}/msi-updates-disabled"
-    updateLatestVersion
-  fi
-else # linux
+else # linux: "download available", which opens the releases page
   ASSET_NAME="${APP_NAME}-linux-${VSCODE_ARCH}-${RELEASE_VERSION}.tar.gz"
-  VERSION_PATH="${VSCODE_QUALITY}/linux/${RELEASE_VERSION}"
+  VERSION_PATH="${VSCODE_QUALITY}/linux-${VSCODE_ARCH}"
   updateLatestVersion
 fi
 
@@ -230,6 +208,21 @@ if [[ ! -d "${REPO_ABSOLUTE_PATH}" ]]; then
 fi
 cd "${REPO_ABSOLUTE_PATH}" || { echo "'${REPO_ABSOLUTE_PATH}' dir not found"; exit 1; }
 
+# Every platform and arch job pushes its own manifests at about the same time: rebase onto the others and retry
+push_master() {
+  local i
+  for i in {1..5}; do
+    if git push origin master --quiet; then
+      return 0
+    fi
+    echo "Push failed (attempt ${i}), rebasing onto origin/master..."
+    sleep $(( 5 * i ))
+    git pull --rebase origin master
+  done
+  echo "Could not push to ${VERSIONS_REPOSITORY}" >&2
+  return 1
+}
+
 git pull origin master
 git add .
 
@@ -238,10 +231,7 @@ CHANGES=$( git status --porcelain )
 if [[ -n "${CHANGES}" ]]; then
   echo "Some changes have been found, pushing them"
   git commit -m "ci(release): update latest version manifests (build ${GITHUB_RUN_NUMBER})"
-if ! git push origin master --quiet; then
-  git pull origin master
-  git push origin master --quiet
-  fi
+  push_master
 else
   echo "No changes"
 fi
@@ -253,5 +243,5 @@ if [[ "${WRITE_VERSION_FILE}" == "yes" ]]; then
   if ! git commit -m "chore(release): set VERSION to ${RELEASE_VERSION}" --quiet; then
     echo "No changes to VERSION file or already up to date."
   fi
-  git push origin master --quiet
+  push_master
 fi
