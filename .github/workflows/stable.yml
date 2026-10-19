@@ -38,7 +38,7 @@ env:
   APP_NAME: Kodia
   ASSETS_REPOSITORY: jcommaret/kodia
   BINARY_NAME: kodia
-  DISABLE_UPDATE: 'yes'
+  DISABLE_UPDATE: 'no'
   GH_REPO_PATH: jcommaret/kodia
   ORG_NAME: jcommaret
   VERSIONS_REPOSITORY: jcommaret/kodia
