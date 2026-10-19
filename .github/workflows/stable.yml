@@ -37,7 +37,7 @@ env:
   ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
   APP_NAME: Kodia
   ASSETS_REPOSITORY: jcommaret/kodia
-  BINARY_NAME: void
+  BINARY_NAME: kodia
   DISABLE_UPDATE: 'yes'
   GH_REPO_PATH: jcommaret/kodia
   ORG_NAME: jcommaret
