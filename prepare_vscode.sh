@@ -183,49 +183,44 @@ fi
 if [[ "${VSCODE_QUALITY}" == "insider" ]]; then
   setpath "product" "nameShort" "Kodia - Insiders"
   setpath "product" "nameLong" "Kodia - Insiders"
-  setpath "product" "applicationName" "void-insiders"
-  setpath "product" "dataFolderName" ".void-insiders"
-  setpath "product" "linuxIconName" "void-insiders"
+  setpath "product" "applicationName" "kodia-insiders"
+  setpath "product" "dataFolderName" ".kodia-insiders"
+  setpath "product" "linuxIconName" "kodia-insiders"
   setpath "product" "quality" "insider"
-  setpath "product" "urlProtocol" "void-insiders"
-  setpath "product" "serverApplicationName" "void-server-insiders"
-  setpath "product" "serverDataFolderName" ".void-server-insiders"
-  setpath "product" "darwinBundleIdentifier" "ai.voideditor.VoidInsiders"
-  setpath "product" "win32AppUserModelId" "Void.VoidInsiders"
+  setpath "product" "urlProtocol" "kodia-insiders"
+  setpath "product" "serverApplicationName" "kodia-server-insiders"
+  setpath "product" "serverDataFolderName" ".kodia-server-insiders"
+  setpath "product" "darwinBundleIdentifier" "com.jcommaret.kodia.insiders"
+  setpath "product" "win32AppUserModelId" "Kodia.KodiaInsiders"
   setpath "product" "win32DirName" "Kodia Insiders"
-  setpath "product" "win32MutexName" "voidinsiders"
+  setpath "product" "win32MutexName" "kodiainsiders"
   setpath "product" "win32NameVersion" "Kodia Insiders"
-  setpath "product" "win32RegValueName" "VoidInsiders"
+  setpath "product" "win32RegValueName" "KodiaInsiders"
   setpath "product" "win32ShellNameShort" "Kodia Insiders"
-  setpath "product" "win32AppId" "{{5893CE20-77AA-4856-A655-ECE65CBCF1C7}"
-  setpath "product" "win32x64AppId" "{{7A261980-5847-44B6-B554-31DF0F5CDFC9}"
-  setpath "product" "win32arm64AppId" "{{EE4FF7AA-A874-419D-BAE0-168C9DBCE211}"
-  setpath "product" "win32UserAppId" "{{FA3AE0C7-888E-45DA-AB58-B8E33DE0CB2E}"
-  setpath "product" "win32x64UserAppId" "{{5B1813E3-1D97-4E00-AF59-C59A39CF066A}"
-  setpath "product" "win32arm64UserAppId" "{{C2FA90D8-B265-41B1-B909-3BAEB21CAA9D}"
+  setpath "product" "win32AppId" "{{9D19AA49-FF13-4B3F-BA21-469C9470E5E2}"
+  setpath "product" "win32x64AppId" "{{C246875C-2B2B-461E-B18D-1C76BA1BB8E8}"
+  setpath "product" "win32arm64AppId" "{{DBCCA03C-A859-4235-8D9B-24B82E896C1D}"
+  setpath "product" "win32UserAppId" "{{06BDFE9D-D233-4BF2-A45A-289755673D42}"
+  setpath "product" "win32x64UserAppId" "{{4E412965-A587-4349-8D14-FAB4512DC45D}"
+  setpath "product" "win32arm64UserAppId" "{{5BB79E2E-1106-48C9-9F7C-8D173EE48E18}"
 else
   setpath "product" "nameShort" "Kodia"
   setpath "product" "nameLong" "Kodia"
-  setpath "product" "applicationName" "void"
-  setpath "product" "linuxIconName" "void"
+  setpath "product" "applicationName" "kodia"
+  setpath "product" "linuxIconName" "kodia"
   setpath "product" "quality" "stable"
-  setpath "product" "urlProtocol" "void"
-  setpath "product" "serverApplicationName" "void-server"
-  setpath "product" "serverDataFolderName" ".void-server"
-  setpath "product" "darwinBundleIdentifier" "com.void"
+  setpath "product" "urlProtocol" "kodia"
+  setpath "product" "serverApplicationName" "kodia-server"
+  setpath "product" "serverDataFolderName" ".kodia-server"
+  setpath "product" "darwinBundleIdentifier" "com.jcommaret.kodia"
   setpath "product" "win32AppUserModelId" "Void.Void"
   setpath "product" "win32DirName" "Kodia"
   setpath "product" "win32MutexName" "void"
   setpath "product" "win32NameVersion" "Kodia"
   setpath "product" "win32RegValueName" "Void"
   setpath "product" "win32ShellNameShort" "K&odia"
-  # Void - already set in product
-  # setpath "product" "win32AppId" "{{88DA3577-054F-4CA1-8122-7D820494CFFB}"
-  # setpath "product" "win32x64AppId" "{{9D394D01-1728-45A7-B997-A6C82C5452C3}"
-  # setpath "product" "win32arm64AppId" "{{0668DD58-2BDE-4101-8CDA-40252DF8875D}"
-  # setpath "product" "win32UserAppId" "{{0FD05EB4-651E-4E78-A062-515204B47A3A}"
-  # setpath "product" "win32x64UserAppId" "{{8BED5DC1-6C55-46E6-9FE6-18F7E6F7C7F1}"
-  # setpath "product" "win32arm64UserAppId" "{{F6C87466-BC82-4A8F-B0FF-18CA366BA4D8}"
+  # Windows installer identity (AppIds in jcommaret/kodia's product.json, mutex, registry and AppUserModelId) still
+  # Void's: changing it needs the installer to remove the previous install first, tested on Windows
 fi
 
 jsonTmp=$( jq -s '.[0] * .[1]' product.json ../product.json )
@@ -345,9 +340,9 @@ if [[ "${OS_NAME}" == "linux" ]]; then
   # as we are renaming the application to void
   # we need to edit a line in the post install template
   if [[ "${VSCODE_QUALITY}" == "insider" ]]; then
-    sed -i "s/code-oss/void-insiders/" resources/linux/debian/postinst.template
+    sed -i "s/code-oss/kodia-insiders/" resources/linux/debian/postinst.template
   else
-    sed -i "s/code-oss/void/" resources/linux/debian/postinst.template
+    sed -i "s/code-oss/kodia/" resources/linux/debian/postinst.template
   fi
 
   # fix the packages metadata
