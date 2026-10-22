@@ -144,14 +144,23 @@ jobs:
         run: ./release.sh
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes' && env.SHOULD_DEPLOY == 'yes'
 
-      - name: Update versions repo (Linux)
+      - name: Prepare the update manifests (Linux)
         env:
           FORCE_UPDATE: ${{ github.event.inputs.force_version }}
           GITHUB_TOKEN: ${{ secrets.STRONGER_GITHUB_TOKEN }}
           GITHUB_USERNAME: ${{ github.repository_owner }}
+          MANIFESTS_DIR: manifests
         run: |
-          git config --global url."https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com".insteadOf "https://github.com"
           ./update_version.sh
+        if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes' && env.SHOULD_DEPLOY == 'yes'
+
+      # publish_release.sh commits the manifests once the release is published (see update_version.sh's MANIFESTS_DIR)
+      - name: Hand the update manifests to the publish job
+        uses: actions/upload-artifact@v6
+        with:
+          name: manifests-linux-${{ matrix.vscode_arch }}
+          path: manifests/
+          if-no-files-found: error
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes' && env.SHOULD_DEPLOY == 'yes'
 
       - name: Upload assets

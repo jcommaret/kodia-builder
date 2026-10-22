@@ -50,23 +50,33 @@ fi
 # DÉFINIR REPOSITORY_NAME AVANT DE L'UTILISER
 REPOSITORY_NAME="${VERSIONS_REPOSITORY/*\//}"
 
-# init versions repo for later commiting + pushing the json file to it
-echo "Cloning repository: ${VERSIONS_REPOSITORY}"
-GIT_LFS_SKIP_SMUDGE=1 git clone "https://${GH_HOST}/${VERSIONS_REPOSITORY}.git" "${REPOSITORY_NAME}" || { echo "Failed to clone repository ${VERSIONS_REPOSITORY}"; exit 1; }
-if [[ ! -d "${REPOSITORY_NAME}" ]]; then
-  echo "Error: Cloned directory '${REPOSITORY_NAME}' not found."
-  exit 1
-fi
-
 # Racine void-builder (assets/) vs clone du dépôt versions (stable/…/latest.json)
 BUILDER_ROOT="${VOID_BUILDER_ROOT:-$(pwd)}"
 ASSETS_DIR="${BUILDER_ROOT}/assets"
-REPO_ABSOLUTE_PATH="${BUILDER_ROOT}/${REPOSITORY_NAME}"
-cd "${REPOSITORY_NAME}" || { echo "'${REPOSITORY_NAME}' dir not found"; exit 1; }
-git config user.email "$( echo "${GITHUB_USERNAME}" | awk '{print tolower($0)}' )-ci@not-real.com"
-git config user.name "${GITHUB_USERNAME} CI"
-git remote rm origin
-git remote add origin "https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@${GH_HOST}/${VERSIONS_REPOSITORY}.git" &> /dev/null
+
+if [[ -n "${MANIFESTS_DIR}" ]]; then
+  # The release is still a draft, so its files can't be downloaded yet: only write the manifests into MANIFESTS_DIR,
+  # with the same layout as the versions repo. publish_release.sh commits them once it has published the release.
+  [[ "${MANIFESTS_DIR}" == /* ]] || MANIFESTS_DIR="${BUILDER_ROOT}/${MANIFESTS_DIR}"
+  echo "Preparing the manifests in ${MANIFESTS_DIR}"
+  mkdir -p "${MANIFESTS_DIR}"
+  cd "${MANIFESTS_DIR}" || { echo "'${MANIFESTS_DIR}' dir not found"; exit 1; }
+else
+  # init versions repo for later commiting + pushing the json file to it
+  echo "Cloning repository: ${VERSIONS_REPOSITORY}"
+  GIT_LFS_SKIP_SMUDGE=1 git clone "https://${GH_HOST}/${VERSIONS_REPOSITORY}.git" "${REPOSITORY_NAME}" || { echo "Failed to clone repository ${VERSIONS_REPOSITORY}"; exit 1; }
+  if [[ ! -d "${REPOSITORY_NAME}" ]]; then
+    echo "Error: Cloned directory '${REPOSITORY_NAME}' not found."
+    exit 1
+  fi
+
+  REPO_ABSOLUTE_PATH="${BUILDER_ROOT}/${REPOSITORY_NAME}"
+  cd "${REPOSITORY_NAME}" || { echo "'${REPOSITORY_NAME}' dir not found"; exit 1; }
+  git config user.email "$( echo "${GITHUB_USERNAME}" | awk '{print tolower($0)}' )-ci@not-real.com"
+  git config user.name "${GITHUB_USERNAME} CI"
+  git remote rm origin
+  git remote add origin "https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@${GH_HOST}/${VERSIONS_REPOSITORY}.git" &> /dev/null
+fi
 
 # --- Définition des fonctions après le cd ---
 URL_BASE="https://${GH_HOST}/${ASSETS_REPOSITORY}/releases/download/${RELEASE_VERSION}"
@@ -199,6 +209,12 @@ else # linux: "download available", which opens the releases page
   ASSET_NAME="${APP_NAME}-linux-${VSCODE_ARCH}-${RELEASE_VERSION}.tar.gz"
   VERSION_PATH="${VSCODE_QUALITY}/linux-${VSCODE_ARCH}"
   updateLatestVersion
+fi
+
+if [[ -n "${MANIFESTS_DIR}" ]]; then
+  echo "Manifests prepared in ${MANIFESTS_DIR}:"
+  find . -name latest.json
+  exit 0
 fi
 
 # Retour au dépôt cloné pour commiter (chemin absolu)
