@@ -121,3 +121,29 @@ jobs:
       SHOULD_BUILD: ${{ needs.check.outputs.SHOULD_BUILD }}
       SHOULD_DEPLOY: ${{ needs.check.outputs.SHOULD_DEPLOY }}
     secrets: inherit
+
+  # Once every platform uploaded its files to the draft release and prepared its update manifests: publishes the
+  # release, then commits the manifests (publish_release.sh). Skipped when a build failed, so the release stays a
+  # draft: re-run the failed jobs, and this one runs after them.
+  publish:
+    needs: [check, build_macos, build_linux, build_windows, reh_linux]
+    if: needs.check.outputs.SHOULD_BUILD == 'yes' && needs.check.outputs.SHOULD_DEPLOY == 'yes'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Collect the update manifests
+        uses: actions/download-artifact@v8
+        with:
+          pattern: manifests-*
+          path: manifests
+          merge-multiple: true
+
+      - name: Publish the release and its update manifests
+        env:
+          STRONGER_GITHUB_TOKEN: ${{ secrets.STRONGER_GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.STRONGER_GITHUB_TOKEN != '' && secrets.STRONGER_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+          GITHUB_USERNAME: ${{ github.repository_owner }}
+          RELEASE_VERSION: ${{ needs.check.outputs.RELEASE_VERSION }}
+          MANIFESTS_DIR: manifests
+        run: ./publish_release.sh

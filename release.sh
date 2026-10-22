@@ -43,13 +43,15 @@ release_ensure_exists() {
     return 0
   fi
 
-  echo "Creating release '${RELEASE_VERSION}' on ${ASSETS_REPOSITORY} (title: '${RELEASE_TITLE}')"
+  # A draft: hidden from the releases page and its "Latest" until publish_release.sh publishes it, once every platform
+  # uploaded its files. gh finds a draft by its tag, so the uploads below work the same.
+  echo "Creating draft release '${RELEASE_VERSION}' on ${ASSETS_REPOSITORY} (title: '${RELEASE_TITLE}')"
 
   if [[ "${VSCODE_QUALITY}" == "insider" ]]; then
     NOTES="update vscode to [${MS_COMMIT}](https://github.com/microsoft/vscode/tree/${MS_COMMIT})"
-    gh release create "${RELEASE_VERSION}" --repo "${ASSETS_REPOSITORY}" --title "${RELEASE_TITLE}" --notes "${NOTES}"
+    gh release create "${RELEASE_VERSION}" --repo "${ASSETS_REPOSITORY}" --title "${RELEASE_TITLE}" --notes "${NOTES}" --draft
   else
-    gh release create "${RELEASE_VERSION}" --repo "${ASSETS_REPOSITORY}" --title "${RELEASE_TITLE}" --notes ""
+    gh release create "${RELEASE_VERSION}" --repo "${ASSETS_REPOSITORY}" --title "${RELEASE_TITLE}" --notes "" --draft
   fi
 }
 
