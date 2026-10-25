@@ -3,7 +3,7 @@
 
 set -e
 
-# Linux CI : release tar.gz uniquement (deb/rpm/appimage → dpkg-shlibdeps + sharp)
+# Linux CI: a package format is built only when its SHOULD_BUILD_* flag says yes (stable-linux.yml: tar.gz, .deb, .rpm)
 if [[ "${OS_NAME}" == "linux" && "${GITHUB_ACTIONS}" == "true" ]]; then
   [[ "${SHOULD_BUILD_DEB}" == "yes" ]] || SHOULD_BUILD_DEB="no"
   [[ "${SHOULD_BUILD_RPM}" == "yes" ]] || SHOULD_BUILD_RPM="no"
