@@ -132,6 +132,10 @@ if [[ -z "${VSCODE_SKIP_SETUPENV}" ]]; then
   else
     source ./build/azure-pipelines/linux/setup-env.sh
   fi
+
+  # Kodia: like VS Code's product-build-linux-setup.yml, patch the Electron V8 headers before the native modules are
+  # built: npm runs the root preinstall only after them, and the sysroot's gcc 10 (arm64) has no <source_location>
+  node build/npm/preinstall.ts
 fi
 
 for i in {1..5}; do # try 5 times
