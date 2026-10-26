@@ -100,17 +100,11 @@ elif [[ "${OS_NAME}" == "windows" ]]; then
 else
   export OPENSSL_LIB_DIR="$( pwd )/openssl/out/${VSCODE_ARCH}-linux/lib"
   export OPENSSL_INCLUDE_DIR="$( pwd )/openssl/out/${VSCODE_ARCH}-linux/include"
-  export VSCODE_SYSROOT_DIR="../.build/sysroots"
 
   if [[ "${VSCODE_ARCH}" == "arm64" ]]; then
     VSCODE_CLI_TARGET="aarch64-unknown-linux-gnu"
-
-    if [[ "${CI_BUILD}" != "no" ]]; then
-      export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc
-      export CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc
-      export CXX_aarch64_unknown_linux_gnu=aarch64-linux-gnu-g++
-      export PKG_CONFIG_ALLOW_CROSS=1
-    fi
+    SYSROOT_ARCH="arm64"
+    SYSROOT_TRIPLE="aarch64-linux-gnu"
   elif [[ "${VSCODE_ARCH}" == "armhf" ]]; then
     VSCODE_CLI_TARGET="armv7-unknown-linux-gnueabihf"
 
@@ -125,12 +119,39 @@ else
     fi
   elif [[ "${VSCODE_ARCH}" == "x64" ]]; then
     VSCODE_CLI_TARGET="x86_64-unknown-linux-gnu"
+    SYSROOT_ARCH="amd64"
+    SYSROOT_TRIPLE="x86_64-linux-gnu"
   fi
 
   if [[ -n "${VSCODE_CLI_TARGET}" ]]; then
     rustup target add "${VSCODE_CLI_TARGET}"
 
     export RUSTFLAGS="-A unused-imports"
+
+    # Kodia: link the CLI against VS Code's glibc 2.28 sysroot, like VS Code's own CLI build
+    # (build/azure-pipelines/cli/cli-compile.yml). Linked against the runner's glibc, it needed glibc 2.39.
+    if [[ -n "${SYSROOT_TRIPLE}" && "${CI_BUILD}" != "no" ]]; then
+      # the client sysroot setup-env.sh already downloaded
+      export VSCODE_SYSROOT_DIR="${VSCODE_CLIENT_SYSROOT_DIR:-$( cd .. && pwd )/.build/sysroots/glibc-2.28-gcc-10.5.0}"
+      SYSROOT_ARCH="${SYSROOT_ARCH}" node -e 'import { getVSCodeSysroot } from "../build/linux/debian/install-sysroot.ts"; (async () => { await getVSCodeSysroot(process.env["SYSROOT_ARCH"]); })()'
+
+      TOOLCHAIN="${VSCODE_SYSROOT_DIR}/${SYSROOT_TRIPLE}"
+      SYSROOT="${TOOLCHAIN}/${SYSROOT_TRIPLE}/sysroot"
+      CARGO_TARGET_ENV="$( echo "${VSCODE_CLI_TARGET}" | tr 'a-z-' 'A-Z_' )"
+      CC_TARGET_ENV="${VSCODE_CLI_TARGET//-/_}"
+
+      export "CARGO_TARGET_${CARGO_TARGET_ENV}_LINKER=${TOOLCHAIN}/bin/${SYSROOT_TRIPLE}-gcc"
+      export "CC_${CC_TARGET_ENV}=${TOOLCHAIN}/bin/${SYSROOT_TRIPLE}-gcc --sysroot=${SYSROOT}"
+      export "PKG_CONFIG_LIBDIR_${CC_TARGET_ENV}=${SYSROOT}/usr/lib/${SYSROOT_TRIPLE}/pkgconfig:${SYSROOT}/usr/share/pkgconfig"
+      export "PKG_CONFIG_SYSROOT_DIR_${CC_TARGET_ENV}=${SYSROOT}"
+      export PKG_CONFIG_ALLOW_CROSS=1
+      # setup-env.sh's compilers are for the client's native modules (a cross gcc on arm64): the build scripts that
+      # compile C for the build machine would pick them up, VS Code's CLI build doesn't have them
+      unset CC CXX CFLAGS CXXFLAGS LDFLAGS
+      # RUSTFLAGS overrides the CARGO_TARGET_*_RUSTFLAGS VS Code sets, so the sysroot goes in it
+      export RUSTFLAGS="${RUSTFLAGS} -C link-arg=--sysroot=${SYSROOT} -C link-arg=-L${SYSROOT}/usr/lib/${SYSROOT_TRIPLE}"
+    fi
+
     cargo build --release --target "${VSCODE_CLI_TARGET}" --bin=code
 
     cp "target/${VSCODE_CLI_TARGET}/release/code" "../../VSCode-linux-${VSCODE_ARCH}/bin/${TUNNEL_APPLICATION_NAME}"

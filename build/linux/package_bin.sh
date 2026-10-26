@@ -34,7 +34,9 @@ export VSCODE_SKIP_NODE_VERSION_CHECK=1
 # '-glibc-2.28-gcc-10.5.0' which matches build/checksums/vscode-sysroot.txt (1.121.0+).
 # The old '-glibc-2.28' suffix no longer has a checksum entry.
 
-if [[ "${VSCODE_ARCH}" == "arm64" || "${VSCODE_ARCH}" == "armhf" ]]; then
+# Kodia: arm64 goes through setup-env.sh like x64, so its native modules are built against VS Code's glibc 2.28
+# sysroot (cross-compiled on an x64 runner, see stable-linux.yml) instead of the build machine's glibc
+if [[ "${VSCODE_ARCH}" == "armhf" ]]; then
   export VSCODE_SKIP_SYSROOT=1
   export VSCODE_SKIP_SETUPENV=1
   export USE_GNUPP2A=1
@@ -130,6 +132,10 @@ if [[ -z "${VSCODE_SKIP_SETUPENV}" ]]; then
   else
     source ./build/azure-pipelines/linux/setup-env.sh
   fi
+
+  # Kodia: like VS Code's product-build-linux-setup.yml, patch the Electron V8 headers before the native modules are
+  # built: npm runs the root preinstall only after them, and the sysroot's gcc 10 (arm64) has no <source_location>
+  node build/npm/preinstall.ts
 fi
 
 for i in {1..5}; do # try 5 times
