@@ -213,14 +213,14 @@ else
   setpath "product" "serverApplicationName" "kodia-server"
   setpath "product" "serverDataFolderName" ".kodia-server"
   setpath "product" "darwinBundleIdentifier" "com.jcommaret.kodia"
-  setpath "product" "win32AppUserModelId" "Void.Void"
+  setpath "product" "win32AppUserModelId" "Kodia.Kodia"
   setpath "product" "win32DirName" "Kodia"
-  setpath "product" "win32MutexName" "void"
+  setpath "product" "win32MutexName" "kodia"
   setpath "product" "win32NameVersion" "Kodia"
-  setpath "product" "win32RegValueName" "Void"
+  setpath "product" "win32RegValueName" "Kodia"
   setpath "product" "win32ShellNameShort" "K&odia"
-  # Windows installer identity (AppIds in jcommaret/kodia's product.json, mutex, registry and AppUserModelId) still
-  # Void's: changing it needs the installer to remove the previous install first, tested on Windows
+  # The AppIds are in jcommaret/kodia's product.json. Its installer (build/win32/code.iss) replaces the installs made
+  # with Void's identifiers, up to 2.6.4, and expects their app to hold the "void" mutex
 fi
 
 jsonTmp=$( jq -s '.[0] * .[1]' product.json ../product.json )
