@@ -9,16 +9,20 @@ cd "$( dirname "${BASH_SOURCE[0]}" )"
 WIN_SDK_MAJOR_VERSION="10"
 WIN_SDK_FULL_VERSION="10.0.17763.0"
 
+# LEGACY_UPGRADE_CODE : l'UpgradeCode du MSI de Kodia jusqu'à la 2.6.x, celui de VSCodium et de Void, d'où
+# vscodium.wxs ne retire que les installations de Kodia (KeepOnlyLegacyKodia).
 if [[ "${VSCODE_QUALITY}" == "insider" ]]; then
   PRODUCT_NAME="Kodia - Insiders"
-  PRODUCT_CODE="VoidInsiders"
-  PRODUCT_UPGRADE_CODE="1C9B7195-5A9A-43B3-B4BD-583E20498467"
+  PRODUCT_CODE="KodiaInsiders"
+  PRODUCT_UPGRADE_CODE="3100C699-97CB-4F12-8D1F-D92E9C5E37A2"
+  LEGACY_UPGRADE_CODE="1C9B7195-5A9A-43B3-B4BD-583E20498467"
   ICON_DIR="..\\..\\..\\src\\insider\\resources\\win32"
   SETUP_RESOURCES_DIR=".\\resources\\insider"
 else
   PRODUCT_NAME="Kodia"
-  PRODUCT_CODE="Void"
-  PRODUCT_UPGRADE_CODE="965370CD-253C-4720-82FC-2E6B02A53808"
+  PRODUCT_CODE="Kodia"
+  PRODUCT_UPGRADE_CODE="8EA564BC-9757-4616-A81D-5917705441B9"
+  LEGACY_UPGRADE_CODE="965370CD-253C-4720-82FC-2E6B02A53808"
   ICON_DIR="..\\..\\..\\src\\stable\\resources\\win32"
   SETUP_RESOURCES_DIR=".\\resources\\stable"
 fi
@@ -36,9 +40,10 @@ PROGRAM_FILES_86=$( env | sed -n 's/^ProgramFiles(x86)=//p' )
 
 APP_NAME="${APP_NAME:-Kodia}"
 
-# WiX ProductVersion : pas de segment composite « 1.99.3-1.4.9 » (prendre la base x.y.z VS Code).
+# WiX ProductVersion : pas de segment composite « 1.141.0-2.6.6 ». On prend la version de Kodia (2.6.6) : celle
+# de VS Code reste la même d'une release de Kodia à l'autre, et un MSI de même version ne remplace pas le précédent.
 PRODUCT_VERSION_WIX="${RELEASE_VERSION%-insider}"
-PRODUCT_VERSION_WIX="${PRODUCT_VERSION_WIX%%-*}"
+PRODUCT_VERSION_WIX="${PRODUCT_VERSION_WIX#*-}"
 
 if [[ -z "${1}" ]]; then
 	OUTPUT_BASE_FILENAME="${APP_NAME}-${VSCODE_ARCH}-${RELEASE_VERSION}"
@@ -53,6 +58,7 @@ else
 fi
 
 sed -i "s|@@PRODUCT_UPGRADE_CODE@@|${PRODUCT_UPGRADE_CODE}|g" .\\includes\\vscodium-variables.wxi
+sed -i "s|@@LEGACY_UPGRADE_CODE@@|${LEGACY_UPGRADE_CODE}|g" .\\includes\\vscodium-variables.wxi
 sed -i "s|@@PRODUCT_NAME@@|${PRODUCT_NAME}|g" .\\vscodium.xsl
 
 find i18n -name '*.wxl' -print0 | xargs -0 sed -i "s|@@PRODUCT_NAME@@|${PRODUCT_NAME}|g"

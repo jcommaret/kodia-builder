@@ -28,6 +28,18 @@
     </Upgrade>
     <CustomAction Id="PreventDowngrading" Error="!(loc.NewerVersionInstalled)" />
 
+    <!--
+      Kodia: up to 2.6.x, Kodia's MSI had the UpgradeCode VSCodium's and Void's still have, so each removed the others.
+      FindRelatedProducts lists every product under that code in LEGACYKODIAFOUND, KeepOnlyLegacyKodia keeps Kodia's
+      (by product name), and RemoveExistingProducts removes them as for an upgrade. A VSCodium or a Void stays.
+    -->
+    <Upgrade Id="$(var.LegacyUpgradeCode)">
+      <UpgradeVersion Minimum="$(var.RTMProductVersion)" IncludeMinimum="yes" Property="LEGACYKODIAFOUND" />
+    </Upgrade>
+    <Property Id="LEGACYKODIAPRODUCTNAME" Value="$(var.AppName)" />
+    <Binary Id="LegacyKodiaScript" SourceFile="$(sys.CURRENTDIR)includes\legacy-kodia.vbs" />
+    <CustomAction Id="KeepOnlyLegacyKodia" BinaryKey="LegacyKodiaScript" VBScriptCall="KeepOnlyLegacyKodia" Execute="immediate" Return="check" />
+
     <!-- WixUI_Advanced defaults to wrong per user install location "[LocalAppDataFolder]", https://sourceforge.net/p/wix/feature-requests/656/ -->
     <CustomAction Id="WixSetDefaultPerUserFolderRoaming" Property="WixPerUserFolder" Value="[AppDataFolder]Apps\[ApplicationFolderName]" Execute="immediate"/>
     <!-- WixUI_Advanced defaults to "[ProgramFilesFolder][ApplicationFolderName]" what is wrong for x64 applications. Fix the path with an override. https://github.com/wixtoolset/issues/issues/5908 -->
@@ -37,6 +49,7 @@
       <Custom Action="WixSetDefaultPerUserFolderRoaming" Before="WixSetPerUserFolder" />
       <Custom Action="WixSetDefaultPerMachineFolderPerArch" Before="WixSetPerMachineFolder" />
       <Custom Action="PreventDowngrading" After="FindRelatedProducts">NEWPRODUCTFOUND</Custom>
+      <Custom Action="KeepOnlyLegacyKodia" After="FindRelatedProducts">LEGACYKODIAFOUND</Custom>
       <!--
         In general it seems very hard to track what files may have changed
         between vscodium versions. As files are crawled with heat and GUIDs
@@ -57,6 +70,7 @@
       <Custom Action="WixSetDefaultPerUserFolderRoaming" Before="WixSetPerUserFolder" />
       <Custom Action="WixSetDefaultPerMachineFolderPerArch" Before="WixSetPerMachineFolder" />
       <Custom Action="PreventDowngrading" After="FindRelatedProducts">NEWPRODUCTFOUND</Custom>
+      <Custom Action="KeepOnlyLegacyKodia" After="FindRelatedProducts">LEGACYKODIAFOUND</Custom>
     </InstallUISequence>
 
     <!--
