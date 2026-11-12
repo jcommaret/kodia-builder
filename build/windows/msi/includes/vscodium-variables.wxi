@@ -21,4 +21,6 @@
   <!-- Static settings, DO NOT TOUCH or upgrades will break! -->
   <?define ProductUpgradeCode="{@@PRODUCT_UPGRADE_CODE@@}" ?>
   <?define RTMProductVersion="0.0.1" ?>
+  <!-- Kodia: the UpgradeCode Kodia's MSI shared with VSCodium and Void up to 2.6.x, see LEGACYKODIAFOUND -->
+  <?define LegacyUpgradeCode="{@@LEGACY_UPGRADE_CODE@@}" ?>
 </Include>
