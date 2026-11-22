@@ -118,7 +118,9 @@ if [[ "${OS_NAME}" == "osx" ]]; then
       exit 1
     fi
     pushd "VSCode-darwin-${VSCODE_ARCH}"
-    "${CREATE_DMG_BIN}" ./*.app .
+    # La signature est désactivée (certificat expiré) : sans --no-code-sign, create-dmg échoue faute d'identité.
+    # Retirer ce flag quand la signature est réactivée.
+    "${CREATE_DMG_BIN}" --no-code-sign ./*.app .
     # Aligné avec update_version.sh : ${APP_NAME}-<voidVersion>-<arch>.dmg
     DMG_FILE=$(ls *.dmg)
     mv "${DMG_FILE}" "../assets/${APP_NAME}-${voidVersion}-${VSCODE_ARCH}.dmg"
