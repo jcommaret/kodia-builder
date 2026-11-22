@@ -132,6 +132,8 @@ jobs:
 
       - name: Prepare assets
         env:
+          # Le .deb/.rpm télécharge le sysroot via l'API GitHub : sans token, le quota anonyme partagé des runners renvoie 403.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SHOULD_BUILD_REH: 'no'
           SHOULD_BUILD_REH_WEB: 'no'
           # .deb and .rpm are back: dpkg-shlibdeps failed on sharp, which the app no longer ships since VS Code 1.141
