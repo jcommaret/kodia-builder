@@ -82,6 +82,13 @@ ci_win_inno_version() {
   echo "${base}.0"
 }
 
+# Replaces the content of a file with the content of another one, and keeps the mode of the file. mktemp makes its
+# file 0600, and `mv` would give that mode to the file: the package then ships product.json unreadable for its users.
+ci_replace_file_keeping_mode() {
+  cat "${1}" > "${2}"
+  rm -f "${1}"
+}
+
 ci_apply_win_inno_package_version() {
   local ver="${1:-$(ci_win_inno_version "${MS_TAG:-${RELEASE_VERSION%%-*}}")}"
   local tmp
@@ -93,7 +100,7 @@ ci_apply_win_inno_package_version() {
 
   tmp=$(mktemp)
   jq --arg v "${ver}" '.version = $v' package.json > "${tmp}"
-  mv "${tmp}" package.json
+  ci_replace_file_keeping_mode "${tmp}" package.json
   echo "Windows Inno package.json version=${ver} (app reste x.y.z après restauration)"
 }
 
@@ -193,7 +200,7 @@ ci_apply_void_version() {
   local tmp
   tmp=$(mktemp)
   jq --arg v "${VOID_VERSION}" '.voidVersion = $v' vscode/product.json > "${tmp}"
-  mv "${tmp}" vscode/product.json
+  ci_replace_file_keeping_mode "${tmp}" vscode/product.json
 }
 
 ci_bump_version_write_env() {
@@ -260,7 +267,7 @@ ci_bump_version() {
     local tmp
     tmp=$(mktemp)
     jq --arg v "${VOID_VERSION}" '.voidVersion = $v' vscode/product.json > "${tmp}"
-    mv "${tmp}" vscode/product.json
+    ci_replace_file_keeping_mode "${tmp}" vscode/product.json
     echo "Updated vscode/product.json voidVersion"
   fi
 
