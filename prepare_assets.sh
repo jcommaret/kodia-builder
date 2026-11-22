@@ -97,6 +97,15 @@ if [[ "${OS_NAME}" == "osx" ]]; then
     # cd ..
   # fi
 
+  # Signature ad-hoc (pas d'identité Apple tant que la signature est désactivée) : sans bundle scellé,
+  # Gatekeeper refuse les apps téléchargées et affiche « endommagé ». Retirer ce bloc quand la signature
+  # Developer ID est réactivée (le bloc signé ci-dessus prend alors le relais).
+  echo "Ad-hoc signing the app bundle"
+  for APP_BUNDLE in VSCode-darwin-"${VSCODE_ARCH}"/*.app; do
+    codesign --force --deep --sign - "${APP_BUNDLE}"
+    codesign --verify --deep --strict "${APP_BUNDLE}"
+  done
+
   if [[ "${SHOULD_BUILD_ZIP}" != "no" ]]; then
     echo "Building and moving ZIP"
     cd "VSCode-darwin-${VSCODE_ARCH}"
