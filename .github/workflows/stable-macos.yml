@@ -3,6 +3,9 @@ name: stable-macos
 on:
   workflow_call:
     inputs:
+      BUILD_SOURCEVERSION:
+        required: true
+        type: string
       MS_COMMIT:
         required: true
         type: string
@@ -38,7 +41,7 @@ env:
 
 jobs:
   build_macos:
-    runs-on: macos-latest
+    runs-on: macos-26
     strategy:
       fail-fast: false
       matrix:
@@ -50,6 +53,7 @@ jobs:
             vscode_arch: arm64
             npm_arch: arm64
     env:
+      BUILD_SOURCEVERSION: ${{ inputs.BUILD_SOURCEVERSION }}
       DISABLED: ${{ vars[format('DISABLE_STABLE_MACOS_APP_{0}', matrix.slug)] }}
       MS_COMMIT: ${{ inputs.MS_COMMIT }}
       MS_TAG: ${{ inputs.MS_TAG }}
@@ -63,7 +67,7 @@ jobs:
       VOID_BUILDER_ROOT: ${{ github.workspace }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
 
       - name: Checkout builder PR
@@ -73,7 +77,7 @@ jobs:
         if: env.DISABLED != 'yes'
 
       - name: Setup Node.js environment
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: '24.18.0'
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
@@ -83,16 +87,9 @@ jobs:
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
 
       - name: Setup Python 3
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.11'
-        if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
-
-      - name: Clone Kodia
-        env:
-          VOID_COMMIT: ${{ github.event.inputs.void_commit }}
-          VOID_RELEASE: ${{ github.event.inputs.void_release }}
-        run: ./ci_repo.sh void
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
 
       - name: Platform CI setup
@@ -104,13 +101,60 @@ jobs:
         run: ./ci_platform.sh
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
 
+      # Les sources viennent du job compile, comme pour Linux et Windows : macOS ne fait plus que le packaging
+      - name: Download vscode artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: vscode
+        if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
+
+      - name: Extract vscode artifact
+        run: tar -xzf vscode.tar.gz && rm vscode.tar.gz
+        if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
+
+      # Même clé que le pipeline de VS Code (computeNodeModulesCacheKey.ts) ; le hashFiles de la clé ajoute les scripts du builder qui changent l'installation
+      - name: Compute node_modules cache key
+        id: nm-key
+        run: |
+          cd vscode
+          echo "key=$( node build/azure-pipelines/common/computeNodeModulesCacheKey.ts darwin "${VSCODE_ARCH}" "$( node -p process.arch )" "$( node -v )" )" >> "${GITHUB_OUTPUT}"
+        if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
+
+      - name: Restore node_modules cache
+        id: nm-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: vscode/.build/node_modules_cache
+          key: node_modules-darwin-${{ matrix.vscode_arch }}-${{ steps.nm-key.outputs.key }}-${{ hashFiles('build/osx/package.sh', 'npmrc') }}
+        if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
+
+      - name: Extract node_modules cache
+        run: tar -xzf vscode/.build/node_modules_cache/cache.tgz -C vscode
+        if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes' && steps.nm-cache.outputs.cache-hit == 'true'
+
+      - name: Cache the CLI build (Rust)
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: vscode/cli -> target
+          key: ${{ matrix.vscode_arch }}
+        if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
+
       - name: Build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           npm_config_arch: ${{ matrix.npm_arch }}
+          NODE_MODULES_RESTORED: ${{ steps.nm-cache.outputs.cache-hit }}
           OS_NAME: osx
-        run: ./build.sh
+        run: ./build/osx/package.sh
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
+
+      # Sauvegardé même si une étape suivante échoue : l'archive est créée juste après npm ci (scripts/lib/node_modules_cache.sh)
+      - name: Save node_modules cache
+        uses: actions/cache/save@v6
+        with:
+          path: vscode/.build/node_modules_cache
+          key: ${{ steps.nm-cache.outputs.cache-primary-key }}
+        if: "!cancelled() && env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes' && steps.nm-cache.outputs.cache-hit != 'true' && hashFiles('vscode/.build/node_modules_cache/cache.tgz') != ''"
 
       # EILSEQ sur APFS : le log npm nomme le fichier au nom non-UTF-8 refusé.
       - name: Dump npm debug logs
@@ -172,7 +216,7 @@ jobs:
 
       # publish_release.sh commits the manifests once the release is published (see update_version.sh's MANIFESTS_DIR)
       - name: Hand the update manifests to the publish job
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: manifests-macos-${{ matrix.vscode_arch }}
           path: manifests/
@@ -180,7 +224,7 @@ jobs:
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes' && env.SHOULD_DEPLOY == 'yes'
 
       - name: Upload assets
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: void-macos-${{ matrix.vscode_arch }}
           path: assets/

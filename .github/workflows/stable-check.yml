@@ -31,7 +31,7 @@ env:
 
 jobs:
   check:
-    runs-on: ubuntu-26.04
+    runs-on: ubuntu-24.04
     outputs:
       MS_COMMIT: ${{ steps.check.outputs.MS_COMMIT || env.MS_COMMIT }}
       MS_TAG: ${{ steps.check.outputs.MS_TAG || env.MS_TAG }}
@@ -42,7 +42,7 @@ jobs:
       SHOULD_DEPLOY: ${{ steps.check.outputs.SHOULD_DEPLOY || env.SHOULD_DEPLOY }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 

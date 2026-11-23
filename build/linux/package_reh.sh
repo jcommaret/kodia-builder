@@ -17,7 +17,8 @@ export VOID_BUILDER_ROOT
 
 mkdir -p assets
 
-tar -xzf ./vscode.tar.gz
+# Le workflow extrait déjà l'artefact pour calculer la clé du cache des node_modules.
+[[ -d vscode ]] || tar -xzf ./vscode.tar.gz
 
 cd vscode || { echo "'vscode' dir not found"; exit 1; }
 
@@ -154,14 +155,19 @@ fi
 mv .npmrc .npmrc.bak
 cp ../npmrc .npmrc
 
-for i in {1..5}; do # try 5 times
-  npm ci --prefix build && break
-  if [[ $i == 3 ]]; then
-    echo "Npm install failed too many times" >&2
-    exit 1
-  fi
-  echo "Npm install failed $i, trying again..."
-done
+# shellcheck source=scripts/lib/node_modules_cache.sh
+. "${VOID_BUILDER_ROOT}/scripts/lib/node_modules_cache.sh"
+
+if ! nm_cache_restored; then
+  for i in {1..5}; do # try 5 times
+    npm ci --prefix build && break
+    if [[ $i == 3 ]]; then
+      echo "Npm install failed too many times" >&2
+      exit 1
+    fi
+    echo "Npm install failed $i, trying again..."
+  done
+fi
 
 if [[ -z "${VSCODE_SKIP_SETUPENV}" ]]; then
   if [[ -n "${VSCODE_SKIP_SYSROOT}" ]]; then
@@ -171,21 +177,29 @@ if [[ -z "${VSCODE_SKIP_SETUPENV}" ]]; then
   fi
 fi
 
-for i in {1..5}; do # try 5 times
-  npm ci && break
-  if [[ $i == 3 ]]; then
-    echo "Npm install failed too many times" >&2
-    exit 1
-  fi
-  echo "Npm install failed $i, trying again..."
+if nm_cache_restored; then
+  echo "node_modules restored from the cache: skipping npm ci"
+else
+  for i in {1..5}; do # try 5 times
+    npm ci && break
+    if [[ $i == 3 ]]; then
+      echo "Npm install failed too many times" >&2
+      exit 1
+    fi
+    echo "Npm install failed $i, trying again..."
 
-  # remove dependencies that fail during cleanup
-  rm -rf node_modules/@vscode node_modules/node-pty
-done
+    # remove dependencies that fail during cleanup
+    rm -rf node_modules/@vscode node_modules/node-pty
+  done
+fi
 
 mv .npmrc.bak .npmrc
 
-node --experimental-strip-types build/azure-pipelines/distro/mixin-npm.ts
+if ! nm_cache_restored; then
+  node --experimental-strip-types build/azure-pipelines/distro/mixin-npm.ts
+
+  nm_cache_archive
+fi
 
 export VSCODE_NODE_GLIBC="-glibc-${GLIBC_VERSION}"
 

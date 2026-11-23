@@ -69,6 +69,8 @@ flowchart LR
 | [`scripts/update_settings.sh`](../scripts/update_settings.sh) | Réglages télémétrie dans `vscode/` |
 | [`scripts/undo_telemetry.sh`](../scripts/undo_telemetry.sh) | URLs Microsoft → 0.0.0.0 |
 | [`scripts/build_cli.sh`](../scripts/build_cli.sh) | Build du CLI Rust |
+| [`scripts/lib/node_modules_cache.sh`](../scripts/lib/node_modules_cache.sh) | Cache des `node_modules` des jobs plateforme (saute `npm ci` quand le cache est restauré) |
+| [`build/osx/package.sh`](../build/osx/package.sh) | Packaging macOS à partir de l'artefact du job compile |
 
 Variable **`VOID_BUILDER_ROOT`** : définie automatiquement par `scripts/lib/utils.sh` (chemin racine du dépôt).
 

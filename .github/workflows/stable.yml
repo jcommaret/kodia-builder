@@ -68,9 +68,10 @@ jobs:
     secrets: inherit
 
   build_macos:
-    needs: [check]
+    needs: [check, compile]
     uses: ./.github/workflows/stable-macos.yml
     with:
+      BUILD_SOURCEVERSION: ${{ needs.compile.outputs.BUILD_SOURCEVERSION }}
       MS_COMMIT: ${{ needs.check.outputs.MS_COMMIT }}
       MS_TAG: ${{ needs.check.outputs.MS_TAG }}
       RELEASE_VERSION: ${{ needs.check.outputs.RELEASE_VERSION }}
@@ -130,7 +131,7 @@ jobs:
     if: needs.check.outputs.SHOULD_BUILD == 'yes' && needs.check.outputs.SHOULD_DEPLOY == 'yes'
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Collect the update manifests
         uses: actions/download-artifact@v8

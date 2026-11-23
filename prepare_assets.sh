@@ -173,31 +173,62 @@ NODEEOF
   source "${VOID_BUILDER_ROOT:-${GITHUB_WORKSPACE:-.}}/scripts/lib/ci_lib.sh"
   ci_apply_win_inno_package_version
 
+  # inno-updater ajoute tools/ au dossier de l'app : il passe avant tout le reste, que le MSI et les setups embarquent.
   npm run gulp "vscode-win32-${VSCODE_ARCH}-inno-updater"
 
-  if [[ "${SHOULD_BUILD_ZIP}" != "no" ]]; then
+  # Ensuite le zip, les deux setups Inno et le MSI ne font que lire le dossier de l'app et écrivent chacun ailleurs
+  # (.build/win32-*/{system,user}-setup, build/windows/msi/releasedir) : on les construit en parallèle. Chaque outil
+  # n'occupe qu'un ou deux cœurs du runner, et ils prenaient environ 15 min à la suite.
+  win_build_zip() {
     7z.exe a -tzip "../assets/${APP_NAME}-win32-${VSCODE_ARCH}-${RELEASE_VERSION}.zip" -x!CodeSignSummary*.md -x!tools "../VSCode-win32-${VSCODE_ARCH}/*" -r
-  fi
-
-  if [[ "${SHOULD_BUILD_EXE_SYS}" != "no" ]]; then
+  }
+  win_build_system_setup() {
     npm run gulp "vscode-win32-${VSCODE_ARCH}-system-setup"
-  fi
-
-  if [[ "${SHOULD_BUILD_EXE_USR}" != "no" ]]; then
+  }
+  win_build_user_setup() {
     npm run gulp "vscode-win32-${VSCODE_ARCH}-user-setup"
+  }
+  win_build_msi() {
+    . ../build/windows/msi/build.sh
+  }
+
+  win_names=()
+  win_pids=()
+  win_start() {
+    echo "Starting ${1} in the background"
+    ( set -e; "${1}" ) > "../${1}.log" 2>&1 &
+    win_names+=("${1}")
+    win_pids+=("$!")
+  }
+
+  [[ "${SHOULD_BUILD_ZIP}" != "no" ]] && win_start win_build_zip
+  [[ "${SHOULD_BUILD_EXE_SYS}" != "no" ]] && win_start win_build_system_setup
+  [[ "${SHOULD_BUILD_EXE_USR}" != "no" ]] && win_start win_build_user_setup
+  if [[ "${VSCODE_ARCH}" == "ia32" || "${VSCODE_ARCH}" == "x64" ]] && [[ "${SHOULD_BUILD_MSI}" != "no" ]]; then
+    win_start win_build_msi
   fi
 
+  win_failed=0
+  for i in "${!win_pids[@]}"; do
+    if wait "${win_pids[$i]}"; then
+      win_status="ok"
+    else
+      win_status="FAILED"
+      win_failed=1
+    fi
+    echo "::group::${win_names[$i]} (${win_status})"
+    cat "../${win_names[$i]}.log"
+    echo "::endgroup::"
+    rm -f "../${win_names[$i]}.log"
+  done
+
+  if (( win_failed )); then
+    echo "At least one Windows package failed: see the groups above" >&2
+    exit 1
+  fi
+
+  # Les setups Inno lisent la version x.y.z.w de package.json : on ne la restaure qu'une fois qu'ils sont terminés.
   ci_restore_package_json_version
-
-  if [[ "${VSCODE_ARCH}" == "ia32" || "${VSCODE_ARCH}" == "x64" ]]; then
-    if [[ "${SHOULD_BUILD_MSI}" != "no" ]]; then
-      . ../build/windows/msi/build.sh
-    fi
-
-    if [[ "${SHOULD_BUILD_MSI_NOUP}" != "no" ]]; then
-      . ../build/windows/msi/build-updates-disabled.sh
-    fi
-  fi
 
   cd ..
 
@@ -215,11 +246,6 @@ NODEEOF
     if [[ "${SHOULD_BUILD_MSI}" != "no" ]]; then
       echo "Moving MSI"
       mv "build\\windows\\msi\\releasedir\\${APP_NAME}-${VSCODE_ARCH}-${RELEASE_VERSION}.msi" assets/
-    fi
-
-    if [[ "${SHOULD_BUILD_MSI_NOUP}" != "no" ]]; then
-      echo "Moving MSI with disabled updates"
-      mv "build\\windows\\msi\\releasedir\\${APP_NAME}-${VSCODE_ARCH}-updates-disabled-${RELEASE_VERSION}.msi" assets/
     fi
   fi
 
@@ -264,12 +290,14 @@ else
 
   if [[ "${SHOULD_BUILD_DEB}" == "yes" ]]; then
     echo "Moving DEB"
-    mv vscode/.build/linux/deb/*/deb/*.deb assets/
+    # Nom stable (sans le timestamp de build du paquet) : un re-run écrase le .deb au lieu d'en ajouter un second.
+    mv vscode/.build/linux/deb/*/deb/*.deb "assets/${APP_NAME}-linux-${VSCODE_ARCH}-${RELEASE_VERSION}.deb"
   fi
 
   if [[ "${SHOULD_BUILD_RPM}" == "yes" ]]; then
     echo "Moving RPM"
-    mv vscode/.build/linux/rpm/*/*.rpm assets/
+    # Nom stable, comme pour le .deb.
+    mv vscode/.build/linux/rpm/*/*.rpm "assets/${APP_NAME}-linux-${VSCODE_ARCH}-${RELEASE_VERSION}.rpm"
   fi
 
   if [[ "${SHOULD_BUILD_APPIMAGE}" == "yes" ]]; then
