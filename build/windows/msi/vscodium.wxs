@@ -4,7 +4,8 @@
 
   <Product Id="$(var.ProductId)" Name="$(var.ProductNameWithVersion)" Language="$(var.ProductLanguage)" Version="$(var.ProductVersion)" Manufacturer="$(var.ProductManufacturerLong)" UpgradeCode="$(var.ProductUpgradeCode)">
     <Package Description="!(loc.PackageDescription)" Manufacturer="$(var.ProductManufacturerLong)" InstallerVersion="200" Compressed="yes" />
-    <Media Id="1" Cabinet="Data1.cab" EmbedCab="yes" CompressionLevel="high" />
+    <!-- Kodia: mszip plutôt que high (LZX) : la création du CAB prenait ~5 min en CI, pour un MSI plus gros d'environ 30 % -->
+    <Media Id="1" Cabinet="Data1.cab" EmbedCab="yes" CompressionLevel="mszip" />
     <Property Id="ARPHELPLINK" Value="!(loc.ProductHelpLink)" />
     <Property Id="ARPURLINFOABOUT" Value="!(loc.ProductUrlInfoAbout)" />
     <Property Id="ARPURLUPDATEINFO" Value="!(loc.ProductUrlUpdateInfo)" />
