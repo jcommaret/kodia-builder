@@ -41,7 +41,7 @@ env:
 
 jobs:
   compile:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     outputs:
       BUILD_SOURCEVERSION: ${{ env.BUILD_SOURCEVERSION }}
     env:
@@ -55,7 +55,7 @@ jobs:
       VOID_BUILDER_ROOT: ${{ github.workspace }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         if: env.SHOULD_BUILD == 'yes'
 
       - name: Checkout builder PR and clone Kodia
@@ -86,7 +86,7 @@ jobs:
         if: env.SHOULD_BUILD == 'yes'
 
       - name: Setup Node.js environment
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: '24.18.0'
         if: env.SHOULD_BUILD == 'yes'
@@ -96,7 +96,7 @@ jobs:
         if: env.SHOULD_BUILD == 'yes'
 
       - name: Setup Python 3
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.11'
         if: env.SHOULD_BUILD == 'yes'
@@ -121,7 +121,7 @@ jobs:
         if: env.SHOULD_BUILD == 'yes'
 
       - name: Upload vscode artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: vscode
           path: ./vscode.tar.gz

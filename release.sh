@@ -101,7 +101,7 @@ release_upload_assets() {
       if [[ -f "${FILE}.sha256" ]]; then
         echo "SHA256: $(cat "${FILE}.sha256")"
       fi
-      gh release upload --repo "${ASSETS_REPOSITORY}" "${RELEASE_VERSION}" "${UPLOAD_FILES[@]}"
+      gh release upload --clobber --repo "${ASSETS_REPOSITORY}" "${RELEASE_VERSION}" "${UPLOAD_FILES[@]}"
 
       EXIT_STATUS=$?
       echo "exit: ${EXIT_STATUS}"
@@ -115,7 +115,7 @@ release_upload_assets() {
           sleep $(( 15 * (i + 1)))
 
           echo "RE-Uploading '${FILE}' at $( date "+%T" )"
-          gh release upload --repo "${ASSETS_REPOSITORY}" "${RELEASE_VERSION}" "${UPLOAD_FILES[@]}"
+          gh release upload --clobber --repo "${ASSETS_REPOSITORY}" "${RELEASE_VERSION}" "${UPLOAD_FILES[@]}"
 
           EXIT_STATUS=$?
           echo "exit: ${EXIT_STATUS}"

@@ -27,7 +27,7 @@ vers Kodia plutôt que VS Code.
 
 - For an extensive list of all the places we edited inside of this VSCodium fork, search "Kodia" and "kodia". We also deleted some workflows we're not using in this VSCodium fork (insider-* and stable-spearhead).
 
-- **Orchestrateur unique** : `.github/workflows/stable.yml` enchaîne un job `check`, un job `compile` (une seule compilation des sources), puis lance en parallèle les builds macOS, Linux (app), Windows et Linux REH. Évitez d’ajouter d’autres workflows avec les mêmes `on:` pour ne pas refaire `compile` trois fois sur chaque push.
+- **Orchestrateur unique** : `.github/workflows/stable.yml` enchaîne un job `check`, un job `compile` (une seule compilation des sources), puis lance en parallèle les builds macOS, Linux (app), Windows et Linux REH. Tous les jobs plateforme, macOS compris, partent de l’artefact `vscode.tar.gz` du job `compile` : ils n’installent que les modules natifs de leur OS/arch (mis en cache, voir `scripts/lib/node_modules_cache.sh`), assemblent l’app et construisent le CLI (cache Rust). Évitez d’ajouter d’autres workflows avec les mêmes `on:` pour ne pas refaire `compile` trois fois sur chaque push.
 
 - **Scripts shell** : points d’entrée à la racine (`ci_*.sh`, `build.sh`, …) ; bibliothèques et helpers dans [`scripts/`](scripts/) — voir [`docs/SCRIPTS.md`](docs/SCRIPTS.md).
 

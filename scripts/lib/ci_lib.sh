@@ -378,7 +378,6 @@ ci_check_tags() {
   export SHOULD_BUILD_EXE_SYS="yes"
   export SHOULD_BUILD_EXE_USR="yes"
   export SHOULD_BUILD_MSI="yes"
-  export SHOULD_BUILD_MSI_NOUP="yes"
   export SHOULD_BUILD_REH="yes"
   export SHOULD_BUILD_REH_WEB="yes"
   export SHOULD_BUILD_RPM="yes"
@@ -402,7 +401,6 @@ ci_check_tags() {
     fi
     if [[ "${DISABLE_MSI}" == "yes" ]]; then
       export SHOULD_BUILD_MSI="no"
-      export SHOULD_BUILD_MSI_NOUP="no"
     fi
   fi
 
@@ -422,7 +420,6 @@ ci_check_tags() {
     "SHOULD_BUILD_EXE_SYS=${SHOULD_BUILD_EXE_SYS}" \
     "SHOULD_BUILD_EXE_USR=${SHOULD_BUILD_EXE_USR}" \
     "SHOULD_BUILD_MSI=${SHOULD_BUILD_MSI}" \
-    "SHOULD_BUILD_MSI_NOUP=${SHOULD_BUILD_MSI_NOUP}" \
     "SHOULD_BUILD_REH=${SHOULD_BUILD_REH}" \
     "SHOULD_BUILD_REH_WEB=${SHOULD_BUILD_REH_WEB}" \
     "SHOULD_BUILD_RPM=${SHOULD_BUILD_RPM}" \

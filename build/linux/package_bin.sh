@@ -15,7 +15,8 @@ export VOID_BUILDER_ROOT
 # shellcheck source=scripts/lib/utils.sh
 . "${VOID_BUILDER_ROOT}/scripts/lib/utils.sh"
 
-tar -xzf ./vscode.tar.gz
+# Le workflow extrait déjà l'artefact pour calculer la clé du cache des node_modules.
+[[ -d vscode ]] || tar -xzf ./vscode.tar.gz
 
 # Only chown when running as root (container builds); skip on GitHub-hosted runners.
 if [[ "${EUID:-$(id -u)}" == "0" ]]; then
@@ -117,15 +118,21 @@ EOF
   echo "${INCLUDES}" > "$HOME/.gyp/include.gypi"
 fi
 
-for i in {1..5}; do # try 5 times
-  npm ci --prefix build && break
-  if [[ $i == 3 ]]; then
-    echo "Npm install failed too many times" >&2
-    exit 1
-  fi
-  echo "Npm install failed $i, trying again..."
-done
+# shellcheck source=scripts/lib/node_modules_cache.sh
+. "${VOID_BUILDER_ROOT}/scripts/lib/node_modules_cache.sh"
 
+if ! nm_cache_restored; then
+  for i in {1..5}; do # try 5 times
+    npm ci --prefix build && break
+    if [[ $i == 3 ]]; then
+      echo "Npm install failed too many times" >&2
+      exit 1
+    fi
+    echo "Npm install failed $i, trying again..."
+  done
+fi
+
+# setup-env.sh runs even when node_modules come from the cache: the CLI is built later with its toolchain
 if [[ -z "${VSCODE_SKIP_SETUPENV}" ]]; then
   if [[ -n "${VSCODE_SKIP_SYSROOT}" ]]; then
     source ./build/azure-pipelines/linux/setup-env.sh --skip-sysroot
@@ -135,19 +142,27 @@ if [[ -z "${VSCODE_SKIP_SETUPENV}" ]]; then
 
   # Kodia: like VS Code's product-build-linux-setup.yml, patch the Electron V8 headers before the native modules are
   # built: npm runs the root preinstall only after them, and the sysroot's gcc 10 (arm64) has no <source_location>
-  node build/npm/preinstall.ts
+  if ! nm_cache_restored; then
+    node build/npm/preinstall.ts
+  fi
 fi
 
-for i in {1..5}; do # try 5 times
-  npm ci && break
-  if [[ $i -eq 3 ]]; then
-    echo "Npm install failed too many times" >&2
-    exit 1
-  fi
-  echo "Npm install failed $i, trying again..."
-done
+if nm_cache_restored; then
+  echo "node_modules restored from the cache: skipping npm ci"
+else
+  for i in {1..5}; do # try 5 times
+    npm ci && break
+    if [[ $i -eq 3 ]]; then
+      echo "Npm install failed too many times" >&2
+      exit 1
+    fi
+    echo "Npm install failed $i, trying again..."
+  done
 
-node --experimental-strip-types build/azure-pipelines/distro/mixin-npm.ts
+  node --experimental-strip-types build/azure-pipelines/distro/mixin-npm.ts
+
+  nm_cache_archive
+fi
 
 npm run gulp "vscode-linux-${VSCODE_ARCH}-min-ci"
 

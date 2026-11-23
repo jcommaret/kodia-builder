@@ -13,7 +13,8 @@ if [[ -z "${VOID_BUILDER_ROOT}" ]]; then
 fi
 export VOID_BUILDER_ROOT
 
-tar -xzf ./vscode.tar.gz
+# Le workflow extrait déjà l'artefact pour calculer la clé du cache des node_modules.
+[[ -d vscode ]] || tar -xzf ./vscode.tar.gz
 
 cd vscode || { echo "'vscode' dir not found"; exit 1; }
 
@@ -21,16 +22,25 @@ cd vscode || { echo "'vscode' dir not found"; exit 1; }
 source "${VOID_BUILDER_ROOT}/scripts/lib/ci_lib.sh"
 ci_apply_void_version
 
-for i in {1..5}; do # try 5 times
-  npm ci && break
-  if [[ $i -eq 3 ]]; then
-    echo "Npm install failed too many times" >&2
-    exit 1
-  fi
-  echo "Npm install failed $i, trying again..."
-done
+# shellcheck source=scripts/lib/node_modules_cache.sh
+. "${VOID_BUILDER_ROOT}/scripts/lib/node_modules_cache.sh"
 
-node --experimental-strip-types build/azure-pipelines/distro/mixin-npm.ts
+if nm_cache_restored; then
+  echo "node_modules restored from the cache: skipping npm ci"
+else
+  for i in {1..5}; do # try 5 times
+    npm ci && break
+    if [[ $i -eq 3 ]]; then
+      echo "Npm install failed too many times" >&2
+      exit 1
+    fi
+    echo "Npm install failed $i, trying again..."
+  done
+
+  node --experimental-strip-types build/azure-pipelines/distro/mixin-npm.ts
+
+  nm_cache_archive
+fi
 
 . "${VOID_BUILDER_ROOT}/build/windows/rtf/make.sh"
 

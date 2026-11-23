@@ -70,7 +70,7 @@ jobs:
       VOID_BUILDER_ROOT: ${{ github.workspace }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         if: env.DISABLED != 'yes'
 
       - name: Switch to relevant branch
@@ -80,7 +80,7 @@ jobs:
         if: env.DISABLED != 'yes'
 
       - name: Setup Node.js environment
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: '24.18.0'
         if: env.DISABLED != 'yes'
@@ -94,7 +94,7 @@ jobs:
         if: env.DISABLED != 'yes'
 
       - name: Setup Python 3
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.11'
         if: env.DISABLED != 'yes'
@@ -112,12 +112,45 @@ jobs:
           name: vscode
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
 
+      - name: Extract vscode artifact
+        run: tar -xzf vscode.tar.gz && rm vscode.tar.gz
+        if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
+
+      # Même clé que le pipeline de VS Code (computeNodeModulesCacheKey.ts) ; le hashFiles de la clé ajoute les scripts du builder qui changent l'installation
+      - name: Compute node_modules cache key
+        id: nm-key
+        run: |
+          cd vscode
+          echo "key=$( node build/azure-pipelines/common/computeNodeModulesCacheKey.ts linux-reh "${VSCODE_ARCH}" "$( node -p process.arch )" "$( node -v )" )" >> "${GITHUB_OUTPUT}"
+        if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
+
+      - name: Restore node_modules cache
+        id: nm-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: vscode/.build/node_modules_cache
+          key: node_modules-linux-reh-${{ matrix.vscode_arch }}-${{ steps.nm-key.outputs.key }}-${{ hashFiles('build/linux/package_reh.sh', 'patches/linux/**', 'npmrc') }}
+        if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
+
+      - name: Extract node_modules cache
+        run: tar -xzf vscode/.build/node_modules_cache/cache.tgz -C vscode
+        if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes' && steps.nm-cache.outputs.cache-hit == 'true'
+
       - name: Build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           npm_config_arch: ${{ matrix.npm_arch }}
+          NODE_MODULES_RESTORED: ${{ steps.nm-cache.outputs.cache-hit }}
         run: ./build/linux/package_reh.sh
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
+
+      # Sauvegardé même si une étape suivante échoue : l'archive est créée juste après npm ci (scripts/lib/node_modules_cache.sh)
+      - name: Save node_modules cache
+        uses: actions/cache/save@v6
+        with:
+          path: vscode/.build/node_modules_cache
+          key: ${{ steps.nm-cache.outputs.cache-primary-key }}
+        if: "!cancelled() && env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes' && steps.nm-cache.outputs.cache-hit != 'true' && hashFiles('vscode/.build/node_modules_cache/cache.tgz') != ''"
 
       - name: Upload to GitHub release
         env:
@@ -128,7 +161,7 @@ jobs:
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes' && env.SHOULD_DEPLOY == 'yes'
 
       - name: Upload assets
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: void-reh-linux-${{ matrix.vscode_arch }}
           path: assets/

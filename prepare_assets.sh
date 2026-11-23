@@ -193,10 +193,6 @@ NODEEOF
     if [[ "${SHOULD_BUILD_MSI}" != "no" ]]; then
       . ../build/windows/msi/build.sh
     fi
-
-    if [[ "${SHOULD_BUILD_MSI_NOUP}" != "no" ]]; then
-      . ../build/windows/msi/build-updates-disabled.sh
-    fi
   fi
 
   cd ..
@@ -215,11 +211,6 @@ NODEEOF
     if [[ "${SHOULD_BUILD_MSI}" != "no" ]]; then
       echo "Moving MSI"
       mv "build\\windows\\msi\\releasedir\\${APP_NAME}-${VSCODE_ARCH}-${RELEASE_VERSION}.msi" assets/
-    fi
-
-    if [[ "${SHOULD_BUILD_MSI_NOUP}" != "no" ]]; then
-      echo "Moving MSI with disabled updates"
-      mv "build\\windows\\msi\\releasedir\\${APP_NAME}-${VSCODE_ARCH}-updates-disabled-${RELEASE_VERSION}.msi" assets/
     fi
   fi
 
@@ -264,12 +255,14 @@ else
 
   if [[ "${SHOULD_BUILD_DEB}" == "yes" ]]; then
     echo "Moving DEB"
-    mv vscode/.build/linux/deb/*/deb/*.deb assets/
+    # Nom stable (sans le timestamp de build du paquet) : un re-run écrase le .deb au lieu d'en ajouter un second.
+    mv vscode/.build/linux/deb/*/deb/*.deb "assets/${APP_NAME}-linux-${VSCODE_ARCH}-${RELEASE_VERSION}.deb"
   fi
 
   if [[ "${SHOULD_BUILD_RPM}" == "yes" ]]; then
     echo "Moving RPM"
-    mv vscode/.build/linux/rpm/*/*.rpm assets/
+    # Nom stable, comme pour le .deb.
+    mv vscode/.build/linux/rpm/*/*.rpm "assets/${APP_NAME}-linux-${VSCODE_ARCH}-${RELEASE_VERSION}.rpm"
   fi
 
   if [[ "${SHOULD_BUILD_APPIMAGE}" == "yes" ]]; then

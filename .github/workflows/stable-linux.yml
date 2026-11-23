@@ -75,7 +75,7 @@ jobs:
       SHOULD_BUILD_APPIMAGE: 'no'
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
 
       - name: Checkout builder PR
@@ -93,7 +93,7 @@ jobs:
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
 
       - name: Setup Node.js environment
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: '24.18.0'
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
@@ -114,7 +114,10 @@ jobs:
           sudo apt-get install -y dpkg-dev fakeroot rpm
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
 
-      - uses: actions-rust-lang/setup-rust-toolchain@v1.16.0
+      - uses: actions-rust-lang/setup-rust-toolchain@v2
+        with:
+          # Son cache vise la racine du dépôt, sans Cargo.lock : celui du CLI est mis en place plus bas
+          cache: false
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
 
       - name: Download vscode artifact
@@ -123,12 +126,52 @@ jobs:
           name: vscode
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
 
+      - name: Extract vscode artifact
+        run: tar -xzf vscode.tar.gz && rm vscode.tar.gz
+        if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
+
+      # Même clé que le pipeline de VS Code (computeNodeModulesCacheKey.ts) ; le hashFiles de la clé ajoute les scripts du builder qui changent l'installation
+      - name: Compute node_modules cache key
+        id: nm-key
+        run: |
+          cd vscode
+          echo "key=$( node build/azure-pipelines/common/computeNodeModulesCacheKey.ts linux "${VSCODE_ARCH}" "$( node -p process.arch )" "$( node -v )" )" >> "${GITHUB_OUTPUT}"
+        if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
+
+      - name: Restore node_modules cache
+        id: nm-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: vscode/.build/node_modules_cache
+          key: node_modules-linux-${{ matrix.vscode_arch }}-${{ steps.nm-key.outputs.key }}-${{ hashFiles('build/linux/package_bin.sh', 'patches/linux/**', 'build/linux/*/electron.sh', 'npmrc') }}
+        if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
+
+      - name: Extract node_modules cache
+        run: tar -xzf vscode/.build/node_modules_cache/cache.tgz -C vscode
+        if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes' && steps.nm-cache.outputs.cache-hit == 'true'
+
+      - name: Cache the CLI build (Rust)
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: vscode/cli -> target
+          key: ${{ matrix.vscode_arch }}
+        if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
+
       - name: Build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           npm_config_arch: ${{ matrix.npm_arch }}
+          NODE_MODULES_RESTORED: ${{ steps.nm-cache.outputs.cache-hit }}
         run: ./build/linux/package_bin.sh
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes'
+
+      # Sauvegardé même si une étape suivante échoue : l'archive est créée juste après npm ci (scripts/lib/node_modules_cache.sh)
+      - name: Save node_modules cache
+        uses: actions/cache/save@v6
+        with:
+          path: vscode/.build/node_modules_cache
+          key: ${{ steps.nm-cache.outputs.cache-primary-key }}
+        if: "!cancelled() && env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes' && steps.nm-cache.outputs.cache-hit != 'true' && hashFiles('vscode/.build/node_modules_cache/cache.tgz') != ''"
 
       - name: Prepare assets
         env:
@@ -163,7 +206,7 @@ jobs:
 
       # publish_release.sh commits the manifests once the release is published (see update_version.sh's MANIFESTS_DIR)
       - name: Hand the update manifests to the publish job
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: manifests-linux-${{ matrix.vscode_arch }}
           path: manifests/
@@ -171,7 +214,7 @@ jobs:
         if: env.DISABLED != 'yes' && env.SHOULD_BUILD == 'yes' && env.SHOULD_DEPLOY == 'yes'
 
       - name: Upload assets
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: void-linux-${{ matrix.vscode_arch }}
           path: assets/
