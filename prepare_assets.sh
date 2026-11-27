@@ -40,71 +40,61 @@ APP_NAME_LC="$( echo "${APP_NAME}" | awk '{print tolower($0)}' )"
 mkdir -p assets
 
 if [[ "${OS_NAME}" == "osx" ]]; then
-  # Signature et notarisation désactivées (certificat Apple expiré) : décommenter ces blocs pour les réactiver.
-  # if [[ -n "${CERTIFICATE_OSX_P12_DATA}" ]]; then
-    # if [[ "${CI_BUILD}" == "no" ]]; then
-      # RUNNER_TEMP="${TMPDIR}"
-    # fi
-#
-    # CERTIFICATE_P12="${APP_NAME}.p12"
-    # KEYCHAIN="${RUNNER_TEMP}/buildagent.keychain"
-    # AGENT_TEMPDIRECTORY="${RUNNER_TEMP}"
-    # shellcheck disable=SC2006
-    # KEYCHAINS=`security list-keychains | xargs`
-#
-    # rm -f "${KEYCHAIN}"
-#
-    # echo "${CERTIFICATE_OSX_P12_DATA}" | base64 --decode > "${CERTIFICATE_P12}"
-#
-    # echo "+ create temporary keychain"
-    # security create-keychain -p pwd "${KEYCHAIN}"
-    # security set-keychain-settings -lut 21600 "${KEYCHAIN}"
-    # security unlock-keychain -p pwd "${KEYCHAIN}"
-    # shellcheck disable=SC2086
-    # security list-keychains -s $KEYCHAINS "${KEYCHAIN}"
-    # security show-keychain-info "${KEYCHAIN}"
-#
-    # echo "+ import certificate to keychain"
-    # security import "${CERTIFICATE_P12}" -k "${KEYCHAIN}" -P "${CERTIFICATE_OSX_P12_PASSWORD}" -T /usr/bin/codesign
-    # security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k pwd "${KEYCHAIN}" > /dev/null
-    # security find-identity "${KEYCHAIN}"
-#
-    # CODESIGN_IDENTITY="$( security find-identity -v -p codesigning "${KEYCHAIN}" | grep -oEi "([0-9A-F]{40})" | head -n 1 )"
-#
-    # echo "+ signing"
-    # export CODESIGN_IDENTITY AGENT_TEMPDIRECTORY
-#
-    # DEBUG="electron-osx-sign*" node --experimental-strip-types vscode/build/darwin/sign.ts "$( pwd )"
-    # codesign --display --entitlements :- ""
-#
-    # echo "+ notarize"
-#
-    # cd "VSCode-darwin-${VSCODE_ARCH}"
-    # ZIP_FILE="./${APP_NAME}-darwin-${VSCODE_ARCH}-${RELEASE_VERSION}.zip"
-#
-    # zip -r -X -y "${ZIP_FILE}" ./*.app
-#
-    # xcrun notarytool store-credentials "${APP_NAME}" --apple-id "${CERTIFICATE_OSX_ID}" --team-id "${CERTIFICATE_OSX_TEAM_ID}" --password "${CERTIFICATE_OSX_APP_PASSWORD}" --keychain "${KEYCHAIN}"
-    # xcrun notarytool history --keychain-profile "${APP_NAME}" --keychain "${KEYCHAIN}"
-    # xcrun notarytool submit "${ZIP_FILE}" --keychain-profile "${APP_NAME}" --wait --keychain "${KEYCHAIN}"
-#
-    # echo "+ attach staple"
-    # xcrun stapler staple ./*.app
-    # spctl --assess -vv --type install ./*.app
-#
-    # rm "${ZIP_FILE}"
-#
-    # cd ..
-  # fi
+  if [[ -n "${CERTIFICATE_OSX_P12_DATA}" ]]; then
+    if [[ "${CI_BUILD}" == "no" ]]; then
+      RUNNER_TEMP="${TMPDIR}"
+    fi
 
-  # Signature ad-hoc (pas d'identité Apple tant que la signature est désactivée) : sans bundle scellé,
-  # Gatekeeper refuse les apps téléchargées et affiche « endommagé ». Retirer ce bloc quand la signature
-  # Developer ID est réactivée (le bloc signé ci-dessus prend alors le relais).
-  echo "Ad-hoc signing the app bundle"
-  for APP_BUNDLE in VSCode-darwin-"${VSCODE_ARCH}"/*.app; do
-    codesign --force --deep --sign - "${APP_BUNDLE}"
-    codesign --verify --deep --strict "${APP_BUNDLE}"
-  done
+    CERTIFICATE_P12="${APP_NAME}.p12"
+    KEYCHAIN="${RUNNER_TEMP}/buildagent.keychain"
+    AGENT_TEMPDIRECTORY="${RUNNER_TEMP}"
+    # shellcheck disable=SC2006
+    KEYCHAINS=`security list-keychains | xargs`
+
+    rm -f "${KEYCHAIN}"
+
+    echo "${CERTIFICATE_OSX_P12_DATA}" | base64 --decode > "${CERTIFICATE_P12}"
+
+    echo "+ create temporary keychain"
+    security create-keychain -p pwd "${KEYCHAIN}"
+    security set-keychain-settings -lut 21600 "${KEYCHAIN}"
+    security unlock-keychain -p pwd "${KEYCHAIN}"
+    # shellcheck disable=SC2086
+    security list-keychains -s $KEYCHAINS "${KEYCHAIN}"
+    # security show-keychain-info "${KEYCHAIN}"
+
+    echo "+ import certificate to keychain"
+    security import "${CERTIFICATE_P12}" -k "${KEYCHAIN}" -P "${CERTIFICATE_OSX_P12_PASSWORD}" -T /usr/bin/codesign
+    security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k pwd "${KEYCHAIN}" > /dev/null
+    # security find-identity "${KEYCHAIN}"
+
+    CODESIGN_IDENTITY="$( security find-identity -v -p codesigning "${KEYCHAIN}" | grep -oEi "([0-9A-F]{40})" | head -n 1 )"
+
+    echo "+ signing"
+    export CODESIGN_IDENTITY AGENT_TEMPDIRECTORY
+
+    DEBUG="electron-osx-sign*" node --experimental-strip-types vscode/build/darwin/sign.ts "$( pwd )"
+    # codesign --display --entitlements :- ""
+
+    echo "+ notarize"
+
+    cd "VSCode-darwin-${VSCODE_ARCH}"
+    ZIP_FILE="./${APP_NAME}-darwin-${VSCODE_ARCH}-${RELEASE_VERSION}.zip"
+
+    zip -r -X -y "${ZIP_FILE}" ./*.app
+
+    xcrun notarytool store-credentials "${APP_NAME}" --apple-id "${CERTIFICATE_OSX_ID}" --team-id "${CERTIFICATE_OSX_TEAM_ID}" --password "${CERTIFICATE_OSX_APP_PASSWORD}" --keychain "${KEYCHAIN}"
+    # xcrun notarytool history --keychain-profile "${APP_NAME}" --keychain "${KEYCHAIN}"
+    xcrun notarytool submit "${ZIP_FILE}" --keychain-profile "${APP_NAME}" --wait --keychain "${KEYCHAIN}"
+
+    echo "+ attach staple"
+    xcrun stapler staple ./*.app
+    # spctl --assess -vv --type install ./*.app
+
+    rm "${ZIP_FILE}"
+
+    cd ..
+  fi
 
   if [[ "${SHOULD_BUILD_ZIP}" != "no" ]]; then
     echo "Building and moving ZIP"
@@ -127,9 +117,7 @@ if [[ "${OS_NAME}" == "osx" ]]; then
       exit 1
     fi
     pushd "VSCode-darwin-${VSCODE_ARCH}"
-    # La signature est désactivée (certificat expiré) : sans --no-code-sign, create-dmg échoue faute d'identité.
-    # Retirer ce flag quand la signature est réactivée.
-    "${CREATE_DMG_BIN}" --no-code-sign ./*.app .
+    "${CREATE_DMG_BIN}" ./*.app .
     # Aligné avec update_version.sh : ${APP_NAME}-<voidVersion>-<arch>.dmg
     DMG_FILE=$(ls *.dmg)
     mv "${DMG_FILE}" "../assets/${APP_NAME}-${voidVersion}-${VSCODE_ARCH}.dmg"
@@ -141,12 +129,12 @@ if [[ "${OS_NAME}" == "osx" ]]; then
     git archive --format zip --output="./assets/${APP_NAME}-${RELEASE_VERSION}-src.zip" HEAD
   fi
 
-  # if [[ -n "${CERTIFICATE_OSX_P12_DATA}" ]]; then
-    # echo "+ clean"
-    # security delete-keychain "${KEYCHAIN}"
+  if [[ -n "${CERTIFICATE_OSX_P12_DATA}" ]]; then
+    echo "+ clean"
+    security delete-keychain "${KEYCHAIN}"
     # shellcheck disable=SC2086
-    # security list-keychains -s $KEYCHAINS
-  # fi
+    security list-keychains -s $KEYCHAINS
+  fi
 
   VSCODE_PLATFORM="darwin"
 elif [[ "${OS_NAME}" == "windows" ]]; then
